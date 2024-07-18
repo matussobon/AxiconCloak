@@ -43,7 +43,7 @@ import {
   createStatus,
   screenChanged,
   onWindowResize,
-} from "./statusFunctions.js";
+} from "./statusfunctions.js";
 import { loadBackgroundImage, toggleFullscreen } from "./CosmeticsFunctions.js";
 import {
   takePhoto,

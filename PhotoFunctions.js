@@ -1,4 +1,4 @@
-import { postStatus } from "./statusFunctions";
+import { postStatus } from "./statusfunctions";
 import { getInfoString } from "./infofunctions";
 
 let appName = "ResonaTHOR";
