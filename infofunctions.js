@@ -1,8 +1,8 @@
 // a separate file for all the background stuff
 // just to make main.js more readable I guess
-let appName = "ResonaTHOR";
+let appName = "Axicon Cloak";
 let appDescription =
-  "the premier tool for simulating the view inside optical resonators";
+  "the premier tool for simulating the invisibility device called an Axicon cloak";
 /*
 X1 = x1
 X2 = x2

@@ -849,13 +849,6 @@ function createGUI() {
     .name(showOuterCylinder2String(infoObject.raytracingSphereShaderMaterial));
 
   cloakFolder
-    .add(GUIParams, "innerRadius", 0, 1)
-    .name("<i>r</i><sub>innner</sub>")
-    .onChange((r_inner) => {
-      infoObject.raytracingSphereShaderMaterial.uniforms.innerRadius.value =
-        r_inner;
-    });
-  cloakFolder
     .add(GUIParams, "outerRadius", 0, 1)
     .name("<i>r</i><sub>outer</sub>")
     .onChange((r_outer) => {
