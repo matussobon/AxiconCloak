@@ -37,13 +37,13 @@ import {
   showCloak2String,
   showInnerCylinder2String,
   showOuterCylinder2String,
-} from "/InfoFunctions.js";
+} from "./InfoFunctions.js";
 import {
   postStatus,
   createStatus,
   screenChanged,
   onWindowResize,
-} from "/statusFunctions.js";
+} from "./statusFunctions.js";
 import { loadBackgroundImage, toggleFullscreen } from "./CosmeticsFunctions.js";
 import {
   takePhoto,
