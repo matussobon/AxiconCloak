@@ -44,7 +44,7 @@ import {
   screenChanged,
   onWindowResize,
 } from "./statusfunctions.js";
-import { loadBackgroundImage, toggleFullscreen } from "./cosmeticsFunctions.js";
+import { loadBackgroundImage, toggleFullscreen } from "./cosmeticsfunctions.js";
 import {
   takePhoto,
   showStoredPhoto,
