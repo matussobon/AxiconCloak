@@ -24,7 +24,7 @@ import { InteractiveGroup } from "three/addons/interactive/InteractiveGroup.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 // import { createMeshesFromInstancedMesh } from 'three/examples/jsm/utils/SceneUtils.js';
 
-import { addOrbitControls, pointForward } from "./CameraFunctions.js";
+import { addOrbitControls, pointForward } from "./cameraFunctions.js";
 import {
   background2String,
   resonatorType2String,
@@ -44,13 +44,13 @@ import {
   screenChanged,
   onWindowResize,
 } from "./statusfunctions.js";
-import { loadBackgroundImage, toggleFullscreen } from "./CosmeticsFunctions.js";
+import { loadBackgroundImage, toggleFullscreen } from "./cosmeticsFunctions.js";
 import {
   takePhoto,
   showStoredPhoto,
   showLivePhoto,
   deleteStoredPhoto,
-} from "./PhotoFunctions.js";
+} from "./photoFunctions.js";
 
 
 // import vertexShaderCode from "./vertex_shader_test.glsl?raw";
