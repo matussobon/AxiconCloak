@@ -201,6 +201,21 @@ export function showCloak2String(ShaderMat) {
   );
 }
 
+// could probably merge these into showCylinder2String
+export function showInnerCylinder2String(ShaderMat) {
+  return (
+    "Inner Cylinder " +
+    (ShaderMat.uniforms.showInnerCylinder.value ? "shown" : "hidden")
+  );
+}
+
+export function showOuterCylinder2String(ShaderMat) {
+  return (
+    "Outer Cylinder " +
+    (ShaderMat.uniforms.showOuterCylinder.value ? "shown" : "hidden")
+  );
+}
+
 let info;
 
 //inf=info

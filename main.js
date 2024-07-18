@@ -34,6 +34,8 @@ import {
   refreshInfo,
   toggleInfoVisibility,
   showCloak2String,
+  showInnerCylinder2String,
+  showOuterCylinder2String,
 } from "./InfoFunctions.js";
 import {
   postStatus,
@@ -131,6 +133,8 @@ let autofocusControl,
   showSphereControl;
 
 let showCloakControl;
+let showInnerCylinderControl;
+let showOuterCylinderControl;
 
 let GUIMesh;
 let showGUIMesh;
@@ -579,6 +583,8 @@ function addRaytracingSphere() {
       innerHeightNegative: { value: innerHeightNegative },
       innerHeightPositive: { value: innerHeightPositive },
       innerPhaseShift: { value: innerPhaseShift },
+      showInnerCylinder: { value: true },
+      showOuterCylinder: { value: true },
       showCloak: { value: true },
       backgroundTexture: { value: backgroundTexture },
       focusDistance: { value: 10.0 },
@@ -603,6 +609,8 @@ function addRaytracingSphere() {
 }
 
 // see https://github.com/mrdoob/three.js/blob/master/examples/webgl_animation_skinning_additive_blending.html
+// the best thing to do would be to move the whole createGUI() into its own file because this is a mess
+// todo: add presets for cloak settings
 function createGUI() {
   // const
   gui = new GUI();
@@ -665,6 +673,23 @@ function createGUI() {
         !infoObject.raytracingSphereShaderMaterial.uniforms.showCloak.value;
       showCloakControl.name(
         showCloak2String(infoObject.raytracingSphereShaderMaterial)
+      );
+    },
+
+    showInnerCylinder: () => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.showInnerCylinder.value =
+        !infoObject.raytracingSphereShaderMaterial.uniforms.showInnerCylinder
+          .value;
+      showInnerCylinderControl.name(
+        showInnerCylinder2String(infoObject.raytracingSphereShaderMaterial)
+      );
+    },
+    showOuterCylinder: () => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.showOuterCylinder.value =
+        !infoObject.raytracingSphereShaderMaterial.uniforms.showOuterCylinder
+          .value;
+      showOuterCylinderControl.name(
+        showOuterCylinder2String(infoObject.raytracingSphereShaderMaterial)
       );
     },
     resonatorType: function () {
@@ -750,20 +775,14 @@ function createGUI() {
       infoObject.raytracingSphereShaderMaterial.uniforms.innerPhaseShift.value =
         inner_Shift;
     });
-  mirrorTypeControl = gui
-    .add(GUIParams, "mirrorType")
-    .name(
-      mirrorType2String(
-        infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value
-      )
-    );
+  // mirrorTypeControl = gui
+  //   .add(GUIParams, "mirrorType")
+  //   .name(
+  //     mirrorType2String(
+  //       infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value
+  //     )
+  //   );
   // cylindricalMirrorsControl = gui.add( GUIParams, 'cylindricalMirrors' ).name( cylindricalMirrors2String() );
-
-  // gui.add( GUIParams, 'x0', -10, -0.1, 0.001 ).name( "<i>x</i><sub>0</sub>" ).onChange( (x) => { xMirrorsX[0] = x; xMirrorsP[0].x = x; for(let i=0; i<mirrorsN2; i++) zMirrorsX1[i] = x; } );
-  // gui.add( GUIParams, 'x1',  0.1,  10, 0.001 ).name( "<i>x</i><sub>1</sub>" ).onChange( (x) => { xMirrorsX[1] = x; xMirrorsP[1].x = x; for(let i=0; i<mirrorsN2; i++) zMirrorsX2[i] = x; } );
-  // gui.add( GUIParams, 'z0', -10, -0.1, 0.001 ).name( "<i>z</i><sub>0</sub>" ).onChange( (z) => { zMirrorsZ[0] = z; zMirrorsP[0].z = z; for(let i=0; i<mirrorsN2; i++) xMirrorsZ1[i] = z; } );
-  // gui.add( GUIParams, 'z1',  0.1,  10, 0.001 ).name( "<i>z</i><sub>1</sub>" ).onChange( (z) => { zMirrorsZ[1] = z; zMirrorsP[1].z = z; for(let i=0; i<mirrorsN2; i++) xMirrorsZ2[i] = z; } );
-
   // gui
   //   .add(GUIParams, "x1", -10, -0.1, 0.001)
   //   .name("<i>x</i><sub>1</sub>")
@@ -793,27 +812,44 @@ function createGUI() {
   // gui.add( GUIParams, 'sphereCentreY',  0, 5 ).name( "<i>y</i><sub>sphere</sub>" ).onChange( (y) => { sphereCentre.y = y; } );
   // gui.add( GUIParams, 'sphereCentreZ', -5, 5 ).name( "<i>z</i><sub>sphere</sub>" ).onChange( (z) => { sphereCentre.z = z; } );
 
-  showSphereControl = gui
+  const sphereFolder = gui.addFolder("Sphere Controls");
+
+  showSphereControl = sphereFolder
     .add(GUIParams, "showSphere")
     .name(showSphere2String(infoObject.raytracingSphereShaderMaterial));
-  gui
+
+  sphereFolder
     .add(GUIParams, "sphereRadius", 0, 1)
     .name("<i>r</i><sub>sphere</sub>")
     .onChange((r) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.sphereRadius.value = r;
     });
-
-  gui
+  sphereFolder
     .add(GUIParams, "sphereHeight", -1, 1, 0.05)
     .name("<i>h</i><sub>sphere</sub>")
     .onChange((h_sphere) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.sphereHeight.value =
         h_sphere;
     });
-  showCloakControl = gui
+
+  const cloakFolder = gui.addFolder("Axicon Cloak Controls");
+
+  showCloakControl = cloakFolder
     .add(GUIParams, "showCloak")
     .name(showCloak2String(infoObject.raytracingSphereShaderMaterial));
-  gui
+
+  showOuterCylinderControl = cloakFolder
+    .add(GUIParams, "showOuterCylinder")
+    .name(showOuterCylinder2String(infoObject.raytracingSphereShaderMaterial));
+
+  cloakFolder
+    .add(GUIParams, "innerRadius", 0, 1)
+    .name("<i>r</i><sub>innner</sub>")
+    .onChange((r_inner) => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.innerRadius.value =
+        r_inner;
+    });
+  cloakFolder
     .add(GUIParams, "outerRadius", 0, 1)
     .name("<i>r</i><sub>outer</sub>")
     .onChange((r_outer) => {
@@ -821,14 +857,14 @@ function createGUI() {
         r_outer;
     });
 
-  gui
+  cloakFolder
     .add(GUIParams, "outerHeightNegative", -1, 0, 0.1)
     .name("<i>h</i><sub>-outer</sub>")
     .onChange((h_outer_neg) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.outerHeightNegative.value =
         h_outer_neg;
     });
-  gui
+  cloakFolder
     .add(GUIParams, "outerHeightPositive", 0, 1, 0.1)
     .name("<i>h</i><sub>+outer</sub>")
     .onChange((h_outer_pos) => {
@@ -836,7 +872,10 @@ function createGUI() {
         h_outer_pos;
     });
 
-  gui
+  showInnerCylinderControl = cloakFolder
+    .add(GUIParams, "showInnerCylinder")
+    .name(showInnerCylinder2String(infoObject.raytracingSphereShaderMaterial));
+  cloakFolder
     .add(GUIParams, "innerRadius", 0, 1)
     .name("<i>r</i><sub>innner</sub>")
     .onChange((r_inner) => {
@@ -844,14 +883,14 @@ function createGUI() {
         r_inner;
     });
 
-  gui
+  cloakFolder
     .add(GUIParams, "innerHeightNegative", -1, 0, 0.1)
     .name("<i>h</i><sub>-inner</sub>")
     .onChange((h_inner_neg) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.innerHeightNegative.value =
         h_inner_neg;
     });
-  gui
+  cloakFolder
     .add(GUIParams, "innerHeightPositive", 0, 1, 0.1)
     .name("<i>h</i><sub>+inner</sub>")
     .onChange((h_inner_pos) => {
