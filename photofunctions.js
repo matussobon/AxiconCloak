@@ -1,7 +1,7 @@
 import { postStatus } from "./statusfunctions.js";
 import { getInfoString } from "./infofunctions.js";
 
-let appName = "ResonaTHOR";
+let appName = "Axicon Cloak";
 
 // my Canon EOS450D
 const click = new Audio("./misc/sounds/click.m4a");
