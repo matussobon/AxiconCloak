@@ -37,7 +37,7 @@ import {
   showCloak2String,
   showInnerCylinder2String,
   showOuterCylinder2String,
-} from "./InfoFunctions.js";
+} from "./infofunctions.js";
 import {
   postStatus,
   createStatus,
