@@ -24,6 +24,7 @@ import { InteractiveGroup } from "three/addons/interactive/InteractiveGroup.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 // import { createMeshesFromInstancedMesh } from 'three/examples/jsm/utils/SceneUtils.js';
 
+import { addOrbitControls, pointForward } from "./CameraFunctions.js";
 import {
   background2String,
   resonatorType2String,
@@ -50,7 +51,7 @@ import {
   showLivePhoto,
   deleteStoredPhoto,
 } from "./PhotoFunctions.js";
-import { addOrbitControls, pointForward } from "./CameraFunctions.js";
+
 
 // import vertexShaderCode from "./vertex_shader_test.glsl?raw";
 //'./shader.glsl?raw'
