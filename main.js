@@ -50,7 +50,7 @@ import {
   showStoredPhoto,
   showLivePhoto,
   deleteStoredPhoto,
-} from "./photoFunctions.js";
+} from "./photofunctions.js";
 
 
 // import vertexShaderCode from "./vertex_shader_test.glsl?raw";
