@@ -24,7 +24,7 @@ import { InteractiveGroup } from "three/addons/interactive/InteractiveGroup.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 // import { createMeshesFromInstancedMesh } from 'three/examples/jsm/utils/SceneUtils.js';
 
-import { addOrbitControls, pointForward } from "./cameraFunctions.js";
+import { addOrbitControls, pointForward } from "./camerafunctions.js";
 import {
   background2String,
   resonatorType2String,
