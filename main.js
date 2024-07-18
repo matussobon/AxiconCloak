@@ -53,13 +53,16 @@ import {
 } from "./photofunctions.js";
 
 
-import vertexShaderCode from "./vertex_shader_test.glsl?raw";
+import vertexShaderCode from "./vertex_shader_test.glsl";
 //'./shader.glsl?raw'
 
 // import fragmentShaderCode from "./fragment_shader_test.glsl";
-import fragmentShaderCode from "./fragment_shader_test3.glsl?raw";
+import fragmentShaderCode from "./fragment_shader_test3.glsl";
 //https://www.youtube.com/watch?v=RDughHM9qoE
 //https://www.npmjs.com/package/vite-plugin-glsl
+
+// const response = await fetch("./shaders/shader.wgsl");
+// const shadername = await response.text();
 
 let scene;
 let renderer;
