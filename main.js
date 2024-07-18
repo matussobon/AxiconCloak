@@ -52,9 +52,11 @@ import {
 } from "./PhotoFunctions.js";
 import { addOrbitControls, pointForward } from "./CameraFunctions.js";
 
-import vertexShaderCode from "./vertex_shader_test.glsl";
+import vertexShaderCode from "./vertex_shader_test.glsl?raw";
+//'./shader.glsl?raw'
+
 // import fragmentShaderCode from "./fragment_shader_test.glsl";
-import fragmentShaderCode from "./fragment_shader_test3.glsl";
+import fragmentShaderCode from "./fragment_shader_test3.glsl?raw";
 //https://www.youtube.com/watch?v=RDughHM9qoE
 //https://www.npmjs.com/package/vite-plugin-glsl
 
