@@ -52,15 +52,15 @@ import {
   deleteStoredPhoto,
 } from "./photofunctions.js";
 
-
+// this works fine when running the app locally 
 // import vertexShaderCode from "./vertex_shader_test.glsl";
-//'./shader.glsl?raw'
-
-// import fragmentShaderCode from "./fragment_shader_test.glsl";
 // import fragmentShaderCode from "./fragment_shader_test3.glsl";
 //https://www.youtube.com/watch?v=RDughHM9qoE
 //https://www.npmjs.com/package/vite-plugin-glsl
 
+
+// random reddit comment came in clutch 
+// this works fine both locally and when deployed on github
 const responseFragment = await fetch("./fragment_shader_test3.glsl");
 const fragmentShaderCode = await responseFragment.text();
 
