@@ -73,35 +73,6 @@ let orbitControls;
 let dragControls;
 let raytracingSphere;
 
-let mirrorsN2 = 4; // max number of mirrors in each array
-
-let xMirrorsN;
-let xMirrorsX; // {x[0], x[1], ...}; note that we require x[0] <= x[1] <= x[2] ...!
-let xMirrorsY1; // {y1[0], y1[1], ...}
-let xMirrorsY2; // {y2[0], y2[1], ...}
-let xMirrorsZ1; // {z1[0], z1[1], ...}
-let xMirrorsZ2; // {z2[0], z2[1], ...}
-let xMirrorsP; // {P[0], P[1], ...} Principal points
-let xMirrorsOP; // {op[0], op[1], ...} optical powers
-
-let yMirrorsN;
-let yMirrorsY; // {y[0], y[1], ...}; note that we require y[0] <= y[1] <= y[2] ...!
-let yMirrorsX1; // {x1[0], x1[1], ...}
-let yMirrorsX2; // {x2[0], x2[1], ...}
-let yMirrorsZ1; // {z1[0], z1[1], ...}
-let yMirrorsZ2; // {z2[0], z2[1], ...}
-let yMirrorsP; // {P[0], P[1], ...} Principal points
-let yMirrorsOP; // {op[0], op[1], ...} optical powers
-
-let zMirrorsN;
-let zMirrorsZ; // {z[0], z[1], ...}; note that we require z[0] <= z[1] <= z[2] ...!
-let zMirrorsX1; // {x1[0], x1[1], ...}
-let zMirrorsX2; // {x2[0], x2[1], ...}
-let zMirrorsY1; // {y1[0], y1[1], ...}
-let zMirrorsY2; // {y2[0], y2[1], ...}
-let zMirrorsP; // {P[0], P[1], ...} Principal points
-let zMirrorsOP; // {op[0], op[1], ...} optical powers
-
 let y1 = -0.5;
 let y2 = 0.5;
 
@@ -208,7 +179,6 @@ function init() {
     backgroundTexture
   );
 
-  initMirrors();
   addRaytracingSphere();
 
   // user interface
@@ -273,141 +243,13 @@ function updateUniforms() {
 
   GUIMesh.position.y = deltaY - 1;
 
-  switch (infoObject.resonatorType) {
-    case 0: // 0 = no resonator:
-      xMirrorsN = 0;
-      yMirrorsN = 0;
-      zMirrorsN = 0;
-      break;
-    case 2: // 2 = crossed canonical resonators in x and z directions
-      xMirrorsN = 2;
-      yMirrorsN = 0;
-      zMirrorsN = 2;
-
-      for (let i = 0; i < xMirrorsN; i++) {
-        xMirrorsY1[i] = y1 + deltaY;
-        xMirrorsY2[i] = y2 + deltaY;
-        xMirrorsZ1[i] = infoObject.z1;
-        xMirrorsZ2[i] = infoObject.z2;
-        xMirrorsP[i].y = deltaY;
-      }
-      xMirrorsX[0] = infoObject.x1;
-      xMirrorsP[0].x = infoObject.x1;
-      xMirrorsOP[0] = infoObject.xMirrorX1OP;
-      xMirrorsX[1] = infoObject.x2;
-      xMirrorsP[1].x = infoObject.x2;
-      xMirrorsOP[1] = infoObject.xMirrorX2OP;
-
-      for (let i = 0; i < zMirrorsN; i++) {
-        zMirrorsY1[i] = y1 + deltaY;
-        zMirrorsY2[i] = y2 + deltaY;
-        zMirrorsX1[i] = infoObject.x1;
-        zMirrorsX2[i] = infoObject.x2;
-        zMirrorsP[i].y = deltaY;
-      }
-      zMirrorsZ[0] = infoObject.z1;
-      zMirrorsP[0].z = infoObject.z1;
-      zMirrorsOP[0] = infoObject.zMirrorZ1OP;
-      zMirrorsZ[1] = infoObject.z2;
-      zMirrorsP[1].z = infoObject.z2;
-      zMirrorsOP[1] = infoObject.zMirrorZ2OP;
-      break;
-    case 3: // 3 = Penrose cavity
-      xMirrorsN = 4;
-      yMirrorsN = 0;
-      zMirrorsN = 4;
-
-      let z3 = infoObject.z1 - 2 / Math.abs(infoObject.zMirrorZ1OP);
-      let z4 = infoObject.z2 + 2 / Math.abs(infoObject.zMirrorZ2OP);
-
-      // the x mirrors
-      for (let i = 0; i < xMirrorsN; i++) {
-        xMirrorsY1[i] = y1 + deltaY;
-        xMirrorsY2[i] = y2 + deltaY;
-        xMirrorsP[i].y = deltaY;
-      }
-
-      xMirrorsZ1[0] = z3;
-      xMirrorsZ2[0] = z4;
-      xMirrorsX[0] = 2 * infoObject.x1;
-      xMirrorsP[0].x = 2 * infoObject.x1;
-      xMirrorsOP[0] = 0; // the outer left mirror
-      xMirrorsZ1[1] = infoObject.z1;
-      xMirrorsZ2[1] = infoObject.z2;
-      xMirrorsX[1] = infoObject.x1;
-      xMirrorsP[1].x = infoObject.x1;
-      xMirrorsOP[1] = 0; // the inner left mirror
-      xMirrorsZ1[2] = infoObject.z1;
-      xMirrorsZ2[2] = infoObject.z2;
-      xMirrorsX[2] = -infoObject.x1;
-      xMirrorsP[2].x = -infoObject.x1;
-      xMirrorsOP[1] = 0; // the inner right mirror
-      xMirrorsZ1[3] = z3;
-      xMirrorsZ2[3] = z4;
-      xMirrorsX[3] = -2 * infoObject.x1;
-      xMirrorsP[3].x = -2 * infoObject.x1;
-      xMirrorsOP[3] = 0; // the outer right mirror
-
-      // the z mirrors
-      for (let i = 0; i < zMirrorsN; i++) {
-        zMirrorsY1[i] = y1 + deltaY;
-        zMirrorsY2[i] = y2 + deltaY;
-        zMirrorsP[i].y = deltaY;
-      }
-
-      zMirrorsX1[0] = 2 * infoObject.x1;
-      zMirrorsX2[0] = -2 * infoObject.x1;
-      zMirrorsZ[0] = z3;
-      zMirrorsP[0].z = z3;
-      zMirrorsOP[0] = infoObject.zMirrorZ1OP; // the outer top mirror
-      zMirrorsX1[1] = 2 * infoObject.x1;
-      zMirrorsX2[1] = infoObject.x1;
-      zMirrorsZ[1] = 0;
-      zMirrorsP[1].z = 0;
-      zMirrorsOP[1] = 0; // the inner top mirror
-      zMirrorsX1[2] = -infoObject.x1;
-      zMirrorsX2[2] = -2 * infoObject.x1;
-      zMirrorsZ[2] = 0;
-      zMirrorsP[2].z = 0;
-      zMirrorsOP[2] = 0; // the inner bottom mirror
-      zMirrorsX1[3] = 2 * infoObject.x1;
-      zMirrorsX2[3] = -2 * infoObject.x1;
-      zMirrorsZ[3] = z4;
-      zMirrorsP[3].z = z4;
-      zMirrorsOP[3] = infoObject.zMirrorZ2OP; // the outer bottom mirror
-
-      break;
-    case 1: // 1 = single canonical resonator in x direction
-    default:
-      xMirrorsN = 2;
-      yMirrorsN = 0;
-      zMirrorsN = 0;
-
-      for (let i = 0; i < xMirrorsN; i++) {
-        xMirrorsY1[i] = y1 + deltaY;
-        xMirrorsY2[i] = y2 + deltaY;
-        xMirrorsZ1[i] = infoObject.z1;
-        xMirrorsZ2[i] = infoObject.z2;
-        xMirrorsP[i].y = deltaY;
-      }
-      xMirrorsX[0] = infoObject.x1;
-      xMirrorsP[0].x = infoObject.x1;
-      xMirrorsOP[0] = infoObject.xMirrorX1OP;
-      xMirrorsX[1] = infoObject.x2;
-      xMirrorsP[1].x = infoObject.x2;
-      xMirrorsOP[1] = infoObject.xMirrorX2OP;
-  }
-  infoObject.raytracingSphereShaderMaterial.uniforms.xMirrorsN.value =
-    xMirrorsN;
-  infoObject.raytracingSphereShaderMaterial.uniforms.yMirrorsN.value =
-    yMirrorsN;
-
-  infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.x =
-    infoObject.sphereCentre.x;
-  infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.y =
-    infoObject.sphereCentre.y + deltaY;
-  infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.z =
-    infoObject.sphereCentre.z;
+  //LOOOK HERE
+  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.x =
+  //   infoObject.sphereCentre.x;
+  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.y =
+  //   infoObject.sphereCentre.y + deltaY;
+  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.z =
+  //   infoObject.sphereCentre.z;
 
   // mesh.rotation.y = -Math.atan2(camera.position.z, camera.position.x);
   // mesh.rotation.z = meshRotationZ;
@@ -557,23 +399,6 @@ function addRaytracingSphere() {
     uniforms: {
       // the set of mirrors in x planes
       maxTraceLevel: { value: 50 },
-      xMirrorsN: { value: 0 },
-      xMirrorsX: { value: xMirrorsX }, // {x[0], x[1], ...}; note that we require x[0] <= x[1] <= x[2] ...!
-      xMirrorsY1: { value: xMirrorsY1 }, // {y1[0], y1[1], ...}
-      xMirrorsY2: { value: xMirrorsY2 }, // {y2[0], y2[1], ...}
-      xMirrorsZ1: { value: xMirrorsZ1 }, // {z1[0], z1[1], ...}
-      xMirrorsZ2: { value: xMirrorsZ2 }, // {z2[0], z2[1], ...}
-      xMirrorsP: { value: xMirrorsP },
-      xMirrorsOP: { value: xMirrorsOP },
-      // the set of mirrors in y planes
-      yMirrorsN: { value: 0 },
-      yMirrorsY: { value: yMirrorsY }, // {y[0], y[1], ...}; note that we require y[0] <= y[1] <= y[2] ...!
-      yMirrorsX1: { value: yMirrorsX1 }, // {x1[0], x1[1], ...}
-      yMirrorsX2: { value: yMirrorsX2 }, // {x2[0], x2[1], ...}
-      yMirrorsZ1: { value: yMirrorsZ1 }, // {z1[0], z1[1], ...}
-      yMirrorsZ2: { value: yMirrorsZ2 }, // {z2[0], z2[1], ...}
-      yMirrorsP: { value: yMirrorsP },
-      yMirrorsOP: { value: yMirrorsOP },
       // cylindricalMirrors: { value: true },
       mirrorType: { value: 1 },
       reflectionCoefficient: { value: 0.9 },
@@ -799,12 +624,13 @@ function createGUI() {
   resonatorYControl = gui
     .add(GUIParams, "resonatorY", 0, 3, 0.001)
     .name("<i>y</i><sub>resonator</sub>")
-    .onChange((y) => {
-      infoObject.resonatorY = y;
+    .onChange((y_res) => {
+      infoObject.resonatorY = y_res;
       refreshInfo(infoObject);
+      console.log(y_res);
     });
 
-  // gui.add(GUIParams, "makeEyeLevel").name("Move resonator to eye level");
+  gui.add(GUIParams, "makeEyeLevel").name("Move resonator to eye level");
   // // gui.add( GUIParams, 'reflectionCoefficient9s', 0, 3, 0.1 ).name( '<div class="tooltip">Nines(<i>R</i>)<span class="tooltiptext">The number of <a href="https://en.m.wikipedia.org/wiki/Nines_(notation)">nines</a><br>in the reflection<br>coefficient, <i>R</i>.<br>E.g. Nines(0.99) = 2.</span></div> ' ).onChange( (l) => { raytracingSphereShaderMaterial.uniforms.reflectionCoefficient.value = 1-Math.pow(10, -l); } );
   // gui
   //   .add(GUIParams, "reflectionLossDB", -30, 0, 0.1)
@@ -836,6 +662,7 @@ function createGUI() {
     .onChange((h_sphere) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.sphereHeight.value =
         h_sphere;
+      console.log(h_sphere);
     });
 
   const cloakFolder = gui.addFolder("Axicon Cloak Controls");
@@ -951,95 +778,10 @@ function createGUI() {
   // folderSettings.add( params, 'Show/hide info');
   // folderSettings.close();
 
-  // enableDisableResonatorControls();
-
   // create the GUI mesh at the end to make sure that it includes all controls
   GUIMesh = new HTMLMesh(gui.domElement);
   GUIMesh.visible = false;
   vrControlsVisibleControl.name(guiMeshVisible2String(GUIMesh)); // this can be called only after GUIMesh has been created
-}
-
-//at this point does nothing?
-
-// function cylindricalMirrors2String() {
-// 	return (raytracingSphereShaderMaterial.uniforms.cylindricalMirrors.value?'Cylindrical mirrors':'Spherical mirrors');
-// 	// return (raytracingSphereShaderMaterial.uniforms.cylindricalMirrors.value?'<div class="tooltip">Cylindrical mirrors<span class="tooltiptext">Cylindrical mirrors,<br>simulated as planar,<br>reflective, ideal<br>thin cylindrical<br>lenses</span></div>':'<div class="tooltip">Spherical mirrors<span class="tooltiptext">Spherical mirrors,<br>simulated as planar,<br>reflective, ideal<br>thin lenses</span></div>');
-// }
-//Do I move this function to the InfoFunctions.js or is this useless?
-
-function initMirrors() {
-  xMirrorsN = 2;
-  // initialise all the elements to default values
-  xMirrorsX = []; // {x[0], x[1], ...}; note that we require x[0] <= x[1] <= x[2] ...!
-  xMirrorsY1 = []; // {y1[0], y1[1], ...}
-  xMirrorsY2 = []; // {y2[0], y2[1], ...}
-  xMirrorsZ1 = []; // {z1[0], z1[1], ...}
-  xMirrorsZ2 = []; // {z2[0], z2[1], ...}
-  xMirrorsP = []; // principal points
-  xMirrorsOP = []; // optical powers
-  for (let i = 0; i < mirrorsN2; i++) {
-    xMirrorsX.push(0.0);
-    xMirrorsY1.push(y1 + infoObject.resonatorY);
-    xMirrorsY2.push(y2 + infoObject.resonatorY);
-    xMirrorsZ1.push(infoObject.z1);
-    xMirrorsZ2.push(infoObject.z2);
-    xMirrorsP.push(new THREE.Vector3(0, infoObject.resonatorY, 0));
-    xMirrorsOP.push(-1);
-  }
-  // set the actual values where those differ from the default ones
-  xMirrorsX[0] = infoObject.x1;
-  xMirrorsP[0].x = infoObject.x1;
-  // xMirrorsX[1] = 0.2; xMirrorsP[1].x = 0.2; xMirrorsY2[1] = 2; xMirrorsZ2[1] = 0;
-  xMirrorsX[1] = infoObject.x2;
-  xMirrorsP[1].x = infoObject.x2;
-
-  yMirrorsN = 0;
-  // initialise all the elements to default values
-  yMirrorsY = []; // {y[0], y[1], ...}; note that we require y[0] <= y[1] <= y[2] ...!
-  yMirrorsX1 = []; // {x1[0], x1[1], ...}
-  yMirrorsX2 = []; // {x2[0], x2[1], ...}
-  yMirrorsZ1 = []; // {z1[0], z1[1], ...}
-  yMirrorsZ2 = []; // {z2[0], z2[1], ...}
-  yMirrorsP = []; // principal points
-  yMirrorsOP = []; // optical powers
-  for (let i = 0; i < mirrorsN2; i++) {
-    yMirrorsY.push(0.0);
-    yMirrorsX1.push(infoObject.x1);
-    yMirrorsX2.push(infoObject.x2);
-    yMirrorsZ1.push(infoObject.z1);
-    yMirrorsZ2.push(infoObject.z2);
-    yMirrorsP.push(new THREE.Vector3(0, infoObject.resonatorY, 0));
-    yMirrorsOP.push(0);
-  }
-  // set the actual values where those differ from the default ones
-  yMirrorsY[0] = y1 + infoObject.resonatorY;
-  yMirrorsP[0].y = y1 + infoObject.resonatorY;
-  yMirrorsY[1] = y2 + infoObject.resonatorY;
-  yMirrorsP[1].y = y2 + infoObject.resonatorY;
-
-  zMirrorsN = 2;
-  // initialise all the elements to default values
-  zMirrorsZ = []; // {z[0], z[1], ...}; note that we require z[0] <= z[1] <= z[2] ...!
-  zMirrorsX1 = []; // {x1[0], x1[1], ...}
-  zMirrorsX2 = []; // {x2[0], x2[1], ...}
-  zMirrorsY1 = []; // {y1[0], y1[1], ...}
-  zMirrorsY2 = []; // {y2[0], y2[1], ...}
-  zMirrorsP = []; // principal points
-  zMirrorsOP = []; // optical powers
-  for (let i = 0; i < mirrorsN2; i++) {
-    zMirrorsZ.push(0.0);
-    zMirrorsX1.push(infoObject.x1);
-    zMirrorsX2.push(infoObject.x2);
-    zMirrorsY1.push(y1 + infoObject.resonatorY);
-    zMirrorsY2.push(y2 + infoObject.resonatorY);
-    zMirrorsP.push(new THREE.Vector3(0, infoObject.resonatorY, 0));
-    zMirrorsOP.push(0.1);
-  }
-  // set the actual values where those differ from the default ones
-  zMirrorsZ[0] = infoObject.z1;
-  zMirrorsP[0].z = infoObject.z1;
-  zMirrorsZ[1] = infoObject.z2;
-  zMirrorsP[1].z = infoObject.z2;
 }
 
 function addXRInteractivity() {
