@@ -73,6 +73,8 @@ let orbitControls;
 let dragControls;
 let raytracingSphere;
 
+let yShift = 0;
+
 let y1 = -0.5;
 let y2 = 0.5;
 
@@ -416,6 +418,7 @@ function addRaytracingSphere() {
       innerPhaseShift: { value: innerPhaseShift },
       showInnerCylinder: { value: true },
       showOuterCylinder: { value: true },
+      yShift: { value: yShift },
       showCloak: { value: true },
       backgroundTexture: { value: backgroundTexture },
       focusDistance: { value: 10.0 },
@@ -482,6 +485,7 @@ function createGUI() {
     sphereRadius: sphereRadius,
     sphereHeight: sphereHeight,
     outerRadius: outerRadius,
+    yShift: yShift,
     outerHeightNegative: outerHeightNegative,
     outerHeightPositive: outerHeightPositive,
     outerPhaseShift: outerPhaseShift,
@@ -575,9 +579,9 @@ function createGUI() {
           infoObject.raytracingSphereShaderMaterial.uniforms
             .reflectionCoefficient.value
       ),
-    makeEyeLevel: function () {
-      infoObject.resonatorY = infoObject.camera.position.y;
-      resonatorYControl.setValue(infoObject.resonatorY);
+    makeEyeLevel: () => {
+      yShift = infoObject.camera.position.y;
+      console.log(yShift);
     },
     // meshRotX: meshRotationX,
     // meshRotY: meshRotationY,
