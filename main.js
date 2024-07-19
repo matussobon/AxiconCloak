@@ -970,7 +970,7 @@ function addEventListenersEtc() {
   document.getElementById("shareButton").addEventListener("click", share);
   document.getElementById("shareButton").style.visibility = "hidden";
   if (!navigator.share)
-    document.getElementById("shareButton").src = "./shareButtonUnavailable.png";
+    document.getElementById("shareButton").src = "./textures/icons/shareButtonUnavailable.png";
   // if(!(navigator.share)) document.getElementById('shareButton').style.opacity = 0.3;
 
   // delete button
