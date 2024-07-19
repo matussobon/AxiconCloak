@@ -631,6 +631,7 @@ function createGUI() {
     .name("<i>y</i><sub>resonator</sub>")
     .onChange((y_res) => {
       infoObject.resonatorY = y_res;
+      infoObject.raytracingSphereShaderMaterial.uniforms.yShift.value = y_res;
       refreshInfo(infoObject);
       console.log(y_res);
     });
