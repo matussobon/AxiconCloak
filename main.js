@@ -581,6 +581,7 @@ function createGUI() {
       ),
     makeEyeLevel: () => {
       yShift = infoObject.camera.position.y;
+      infoObject.raytracingSphereShaderMaterial.uniforms.yShift.value = yShift;
       console.log(yShift);
     },
     // meshRotX: meshRotationX,
