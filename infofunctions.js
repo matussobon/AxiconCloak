@@ -2,7 +2,7 @@
 // just to make main.js more readable I guess
 let appName = "Axicon Cloak";
 let appDescription =
-  "the premier tool for simulating the invisibility device called an Axicon cloak";
+  "the premier tool for simulating an invisibility device comprised of phase holograms";
 /*
 X1 = x1
 X2 = x2
