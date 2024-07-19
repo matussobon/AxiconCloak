@@ -256,33 +256,6 @@ function updateUniforms() {
   // mesh.rotation.y = -Math.atan2(camera.position.z, camera.position.x);
   // mesh.rotation.z = meshRotationZ;
 
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsN.value = xMirrorsN;
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsX.value = xMirrorsX;	// {x[0], x[1], ...}; note that we require x[0] <= x[1] <= x[2] ...!
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsY1.value = xMirrorsY1;	// {y1[0], y1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsY2.value = xMirrorsY2;	// {y2[0], y2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsZ1.value = xMirrorsZ1;	// {z1[0], z1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsZ2.value = xMirrorsZ2;	// {z2[0], z2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsP.value = xMirrorsP;	// {P[0], P[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.xMirrorsOP.value = xMirrorsOP;	// {op[0], op[1], ...}
-
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsN.value = yMirrorsN;
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsY.value = yMirrorsY;	// {y[0], y[1], ...}; note that we require y[0] <= y[1] <= y[2] ...!
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsX1.value = yMirrorsX1;	// {x1[0], x1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsX2.value = yMirrorsX2;	// {x2[0], x2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsZ1.value = yMirrorsZ1;	// {z1[0], z1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsZ2.value = yMirrorsZ2;	// {z2[0], z2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsP.value = yMirrorsP;	// {P[0], P[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.yMirrorsOP.value = yMirrorsOP;	// {op[0], op[1], ...}
-
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsN.value = zMirrorsN;
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsZ.value = zMirrorsZ;	// {z[0], z[1], ...}; note that we require z[0] <= z[1] <= z[2] ...!
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsX1.value = zMirrorsX1;	// {x1[0], x1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsX2.value = zMirrorsX2;	// {x2[0], x2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsY1.value = zMirrorsY1;	// {y1[0], y1[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsY2.value = zMirrorsY2;	// {y2[0], y2[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsP.value = zMirrorsP;	// {P[0], P[1], ...}
-  // raytracingSphereShaderMaterial.uniforms.zMirrorsOP.value = zMirrorsOP;	// {op[0], op[1], ...}
-
   infoObject.raytracingSphereShaderMaterial.uniforms.backgroundTexture.value =
     backgroundTexture;
 
@@ -342,25 +315,6 @@ function updateUniforms() {
     // GUIParams.'tan<sup>-1</sup>(focus. dist.)'.value = atanFocusDistance;
     focusDistanceControl.setValue(infoObject.atanFocusDistance);
   }
-
-  // (re)create random numbers
-  // let i=0;
-  // let randomNumbersX = [];
-  // let randomNumbersY = [];
-  // do {
-  // 	// create a new pairs or random numbers (x, y) such that x^2 + y^2 <= 1
-  // 	let x = 2*Math.random()-1;	// random number between -1 and 1
-  // 	let y = 2*Math.random()-1;	// random number between -1 and 1
-  // 	if(x*x + y*y <= 1) {
-  // 		// (x,y) lies within a circle of radius 1
-  // 		//  add a new point to the array of points on the aperture
-  // 		randomNumbersX.push(apertureRadius*x);
-  // 		randomNumbersY.push(apertureRadius*y);
-  // 		i++;
-  // 	}
-  // } while (i < 100);
-  // raytracingSphereShaderMaterial.uniforms.randomNumbersX.value = randomNumbersX;
-  // raytracingSphereShaderMaterial.uniforms.randomNumbersY.value = randomNumbersY;
 }
 
 /** create raytracing phere */
@@ -580,8 +534,8 @@ function createGUI() {
             .reflectionCoefficient.value
       ),
     makeEyeLevel: () => {
-      yShift = infoObject.camera.position.y;
-      infoObject.raytracingSphereShaderMaterial.uniforms.yShift.value = yShift;
+      infoObject.raytracingSphereShaderMaterial.uniforms.yShift.value =
+        infoObject.camera.position.y;
       console.log(yShift);
     },
     // meshRotX: meshRotationX,
@@ -628,7 +582,7 @@ function createGUI() {
 
   resonatorYControl = gui
     .add(GUIParams, "resonatorY", 0, 3, 0.001)
-    .name("<i>y</i><sub>resonator</sub>")
+    .name("<i>y</i><sub>cloak</sub>")
     .onChange((y_res) => {
       infoObject.resonatorY = y_res;
       infoObject.raytracingSphereShaderMaterial.uniforms.yShift.value = y_res;
@@ -972,7 +926,8 @@ function addEventListenersEtc() {
   document.getElementById("shareButton").addEventListener("click", share);
   document.getElementById("shareButton").style.visibility = "hidden";
   if (!navigator.share)
-    document.getElementById("shareButton").src = "./textures/icons/shareButtonUnavailable.png";
+    document.getElementById("shareButton").src =
+      "./textures/icons/shareButtonUnavailable.png";
   // if(!(navigator.share)) document.getElementById('shareButton').style.opacity = 0.3;
 
   // delete button
