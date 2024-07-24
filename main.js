@@ -84,10 +84,12 @@ let sphereHeight = 0;
 let outerRadius = 0.3;
 let outerHeightNegative = -0.1;
 let outerHeightPositive = 0.1;
+let outerYcoord = 0;
 
 let innerRadius = 0.1;
 let innerHeightNegative = -0.2;
 let innerHeightPositive = 0.2;
+let innerYcoord = 0;
 
 let phaseShift = 0.6;
 
@@ -100,10 +102,6 @@ let gui;
 let GUIParams;
 let autofocusControl,
   focusDistanceControl,
-  resonatorTypeControl,
-  mirrorTypeControl,
-  opz0Control,
-  opz1Control,
   resonatorYControl,
   cylindricalMirrorsControl,
   backgroundControl,
@@ -363,10 +361,12 @@ function addRaytracingSphere() {
       outerRadius: { value: outerRadius },
       outerHeightNegative: { value: outerHeightNegative },
       outerHeightPositive: { value: outerHeightPositive },
+      outerYcoord: { value: outerYcoord },
       phaseShift: { value: phaseShift },
       innerRadius: { value: innerRadius },
       innerHeightNegative: { value: innerHeightNegative },
       innerHeightPositive: { value: innerHeightPositive },
+      innerYcoord: { value: innerYcoord },
       showInnerCylinder: { value: true },
       showOuterCylinder: { value: true },
       yShift: { value: yShift },
@@ -441,6 +441,8 @@ function createGUI() {
     outerHeightPositive: outerHeightPositive,
     phaseShift: phaseShift,
     innerRadius: innerRadius,
+    outerYcoord: outerYcoord,
+    innerYcoord: innerYcoord,
     innerHeightNegative: innerHeightNegative,
     innerHeightPositive: innerHeightPositive,
     sphereCentreX: infoObject.sphereCentre.x,
@@ -583,6 +585,14 @@ function createGUI() {
     });
 
   cloakFolder
+    .add(GUIParams, "outerYcoord", -1, 1)
+    .name("<i>y</i><sub>outer</sub>")
+    .onChange((y_outer) => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.outerYcoord.value =
+        y_outer;
+    });
+
+  cloakFolder
     .add(GUIParams, "outerHeightNegative", -1, 0, 0.1)
     .name("<i>h</i><sub>-outer</sub>")
     .onChange((h_outer_neg) => {
@@ -606,6 +616,14 @@ function createGUI() {
     .onChange((r_inner) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.innerRadius.value =
         r_inner;
+    });
+
+  cloakFolder
+    .add(GUIParams, "innerYcoord", -1, 1)
+    .name("<i>y</i><sub>inner</sub>")
+    .onChange((y_inner) => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.innerYcoord.value =
+        y_inner;
     });
 
   cloakFolder

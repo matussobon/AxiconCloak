@@ -27,12 +27,14 @@ uniform bool showInnerCylinder;
 uniform float outerRadius; 
 uniform float outerHeightNegative;
 uniform float outerHeightPositive;
+uniform float outerYcoord;
 
 
 // inner cylinder properties
 uniform float innerRadius;
 uniform float innerHeightNegative; 
 uniform float innerHeightPositive;
+uniform float innerYcoord;
 
 
 // background
@@ -115,6 +117,7 @@ bool findNearestIntersectionWithCylinder(
 	vec3 c,		// cylinder centre
 	float r,	// cylinder radius
 	float yShift,
+	float yCoord,
 	float y_min, // cylinder height
 	float y_max, // cylinder height 
 	bool startPointIsIntersectionWithCylinder,
@@ -122,8 +125,8 @@ bool findNearestIntersectionWithCylinder(
 	out float intersectionDistance,
 	out vec3 intersectionNormal
 ) {
-	y_min = y_min + yShift;
-	y_max = y_max + yShift;
+	y_min = y_min + yShift + yCoord;
+	y_max = y_max + yShift+ yCoord;
 	// for maths see geometry.pdf
 	vec2 v2 = s.xz - c.xz;
 	vec2 d2 = d.xz;
@@ -208,7 +211,7 @@ bool findNearestIntersectionWithObjects(
 	vec3 intersectionNormal; //... intersection normal...
 
 	// is there an intersection with the cylinder1
-	if( showCloak && showInnerCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, innerRadius, yShift, innerHeightNegative, innerHeightPositive, startIntersectionObjectIndex == 0, intersectionPosition, intersectionDistance, intersectionNormal) ) {
+	if( showCloak && showInnerCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, innerRadius, yShift,innerYcoord, innerHeightNegative, innerHeightPositive, startIntersectionObjectIndex == 0, intersectionPosition, intersectionDistance, intersectionNormal) ) {
 		// yes, there is an intersection with the cylinder
 		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
 		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 0)) {
@@ -220,7 +223,7 @@ bool findNearestIntersectionWithObjects(
 		}
 	}
 	// is there an intersection with the cylinder2
-	if( showCloak && showOuterCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, outerRadius,yShift, outerHeightNegative, outerHeightPositive + yShift, startIntersectionObjectIndex == 1, intersectionPosition, intersectionDistance, intersectionNormal) ) {
+	if( showCloak && showOuterCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, outerRadius,yShift, outerYcoord, outerHeightNegative, outerHeightPositive + yShift, startIntersectionObjectIndex == 1, intersectionPosition, intersectionDistance, intersectionNormal) ) {
 		// yes, there is an intersection with the cylinder
 		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
 		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 1)) {
