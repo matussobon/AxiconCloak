@@ -89,8 +89,7 @@ let innerRadius = 0.1;
 let innerHeightNegative = -0.2;
 let innerHeightPositive = 0.2;
 
-let outerPhaseShift = 0.6;
-let innerPhaseShift = -0.6;
+let phaseShift = 0.6;
 
 let raytracingSphereRadius = 100.0;
 
@@ -313,7 +312,6 @@ function updateUniforms() {
     infoObject.raytracingSphereShaderMaterial.uniforms.focusDistance.value =
       focusDistance;
     // GUIParams.'tan<sup>-1</sup>(focus. dist.)'.value = atanFocusDistance;
-    focusDistanceControl.setValue(infoObject.atanFocusDistance);
   }
 }
 
@@ -365,11 +363,10 @@ function addRaytracingSphere() {
       outerRadius: { value: outerRadius },
       outerHeightNegative: { value: outerHeightNegative },
       outerHeightPositive: { value: outerHeightPositive },
-      outerPhaseShift: { value: outerPhaseShift },
+      phaseShift: { value: phaseShift },
       innerRadius: { value: innerRadius },
       innerHeightNegative: { value: innerHeightNegative },
       innerHeightPositive: { value: innerHeightPositive },
-      innerPhaseShift: { value: innerPhaseShift },
       showInnerCylinder: { value: true },
       showOuterCylinder: { value: true },
       yShift: { value: yShift },
@@ -442,11 +439,10 @@ function createGUI() {
     yShift: yShift,
     outerHeightNegative: outerHeightNegative,
     outerHeightPositive: outerHeightPositive,
-    outerPhaseShift: outerPhaseShift,
+    phaseShift: phaseShift,
     innerRadius: innerRadius,
     innerHeightNegative: innerHeightNegative,
     innerHeightPositive: innerHeightPositive,
-    innerPhaseShift: innerPhaseShift,
     sphereCentreX: infoObject.sphereCentre.x,
     sphereCentreY: infoObject.sphereCentre.y,
     sphereCentreZ: infoObject.sphereCentre.z,
@@ -481,43 +477,7 @@ function createGUI() {
         showOuterCylinder2String(infoObject.raytracingSphereShaderMaterial)
       );
     },
-    resonatorType: function () {
-      infoObject.resonatorType = (infoObject.resonatorType + 1) % 4;
-      resonatorTypeControl.name(resonatorType2String(infoObject.resonatorType));
-      enableDisableResonatorControls();
-      if (infoObject.resonatorType == 3) {
-        // Penrose cavity
-        infoObject.zMirrorZ1OP = Math.max(1, infoObject.zMirrorZ1OP);
-        infoObject.zMirrorZ2OP = Math.max(1, infoObject.zMirrorZ2OP);
-        opz0Control.setValue(infoObject.zMirrorZ1OP);
-        opz1Control.setValue(infoObject.zMirrorZ2OP);
-      }
-      // createGUI();
-      // opz0Control.disable( resonatorType == 0 );
-      // opz1Control.disable( resonatorType == 0 );
-      // z0Control.disable( resonatorType == 0 );
-      // z1Control.disable( resonatorType == 0 );
-    },
-    mirrorType: function () {
-      infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value =
-        (infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value +
-          1) %
-        2;
-      mirrorTypeControl.name(
-        mirrorType2String(
-          infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value
-        )
-      );
-    },
-    // optical powers
-    // opx1: infoObject.xMirrorX1OP,
-    // opx2: infoObject.xMirrorX2OP,
-    // opz1: infoObject.zMirrorZ1OP,
-    // opz2: infoObject.zMirrorZ2OP,
-    x1: infoObject.x1,
-    // x2: infoObject.x2,
-    // z1: infoObject.z1,
-    // z2: infoObject.z2,
+    // x1: infoObject.x1,
     resonatorY: infoObject.resonatorY,
     cylindricalMirrors: function () {
       infoObject.raytracingSphereShaderMaterial.uniforms.cylindricalMirrors.value =
@@ -551,34 +511,13 @@ function createGUI() {
         r + 2;
     });
   gui
-    .add(GUIParams, "outerPhaseShift", 0, 1, 0.1)
-    .name("Outer hologram phase shift")
-    .onChange((outer_Shift) => {
-      infoObject.raytracingSphereShaderMaterial.uniforms.outerPhaseShift.value =
-        outer_Shift;
-      console.log(outer_Shift);
+    .add(GUIParams, "phaseShift", 0, 1, 0.05)
+    .name("Hologram Phase shift")
+    .onChange((pShift) => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.phaseShift.value =
+        pShift;
+      console.log(pShift);
     });
-  gui
-    .add(GUIParams, "innerPhaseShift", -1, 0, 0.1)
-    .name("Inner hologram phase shift")
-    .onChange((inner_Shift) => {
-      infoObject.raytracingSphereShaderMaterial.uniforms.innerPhaseShift.value =
-        inner_Shift;
-    });
-  // mirrorTypeControl = gui
-  //   .add(GUIParams, "mirrorType")
-  //   .name(
-  //     mirrorType2String(
-  //       infoObject.raytracingSphereShaderMaterial.uniforms.mirrorType.value
-  //     )
-  //   );
-  // cylindricalMirrorsControl = gui.add( GUIParams, 'cylindricalMirrors' ).name( cylindricalMirrors2String() );
-  // gui
-  //   .add(GUIParams, "x1", -10, -0.1, 0.001)
-  //   .name("<i>x</i><sub>1</sub>")
-  //   .onChange((x) => {
-  //     infoObject.x1 = x;
-  //   });
 
   resonatorYControl = gui
     .add(GUIParams, "resonatorY", 0, 3, 0.001)
@@ -697,31 +636,6 @@ function createGUI() {
     screenChanged(renderer, infoObject.camera, fov);
     infoObject.fovScreen = fov;
   });
-  gui.add(GUIParams, "Aperture radius", 0.0, 1.0, 0.01).onChange((r) => {
-    infoObject.apertureRadius = r;
-  });
-  // autofocusControl = gui.add( GUIParams, 'autofocus' ).name( 'Autofocus: ' + (autofocus?'On':'Off') );
-  // gui.add( GUIParams, 'Autofocus' ).onChange( (b) => { autofocus = b; focusDistanceControl.disable(autofocus); } );
-  focusDistanceControl = gui
-    .add(
-      GUIParams,
-      "tan<sup>-1</sup>(focus. dist.)",
-      //Math.atan(0.1),
-      0.01, // -0.5*Math.PI,	// allow only positive focussing distances
-      0.5 * Math.PI,
-      0.0001
-    )
-    .onChange((a) => {
-      infoObject.atanFocusDistance = a;
-    });
-  focusDistanceControl.disable(autofocus);
-  // focusDistanceControl = gui.add( GUIParams, 'tan<sup>-1</sup>(focus. dist.)',
-  // 	//Math.atan(0.1),
-  // 	-0.5*Math.PI,
-  // 	0.5*Math.PI,
-  // 	0.001
-  // ).onChange( (a) => { atanFocusDistance = a; } );
-  // folderVirtualCamera.add( atanFocusDistance, 'atan focus dist', -0.5*Math.PI, +0.5*Math.PI ).listen();
   gui.add(GUIParams, "No of rays", 1, 100, 1).onChange((n) => {
     infoObject.noOfRays = n;
   });
@@ -729,14 +643,6 @@ function createGUI() {
   if (renderer.xr.enabled) {
     vrControlsVisibleControl = gui.add(GUIParams, "vrControlsVisible");
   }
-  // folderVirtualCamera.close();
-
-  // const folderSettings = gui.addFolder( 'Other controls' );
-  // // folderSettings.add( params, 'Video feed forward' ).onChange( (b) => { raytracingSphereShaderMaterial.uniforms.keepVideoFeedForward.value = b; } );
-  // // folderSettings.add( params, 'Lenslet type', { 'Ideal thin': true, 'Phase hologram': false } ).onChange( (t) => { raytracingSphereShaderMaterial.uniforms.idealLenses.value = t; });
-  // // folderSettings.add( params, 'Ideal lenses').onChange( (b) => { raytracingSphereShaderMaterial.uniforms.idealLenses.value = b; } );
-  // folderSettings.add( params, 'Show/hide info');
-  // folderSettings.close();
 
   // create the GUI mesh at the end to make sure that it includes all controls
   GUIMesh = new HTMLMesh(gui.domElement);

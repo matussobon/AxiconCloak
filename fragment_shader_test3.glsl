@@ -17,6 +17,7 @@ uniform bool showCloak;
 // Axicon Cloak centre 
 uniform bool cloakCentre;
 uniform float yShift;
+uniform float phaseShift;
 
 // to do: show/hide the individual cylinders
 uniform bool showOuterCylinder;
@@ -26,13 +27,13 @@ uniform bool showInnerCylinder;
 uniform float outerRadius; 
 uniform float outerHeightNegative;
 uniform float outerHeightPositive;
-uniform float outerPhaseShift;
+
 
 // inner cylinder properties
 uniform float innerRadius;
 uniform float innerHeightNegative; 
 uniform float innerHeightPositive;
-uniform float innerPhaseShift;
+
 
 // background
 uniform sampler2D backgroundTexture;
@@ -317,12 +318,12 @@ void main() {
 			if(oi == 0) { 
 				// the first cylinder
 				// b *= vec4(1., .5, .5, 1.);
-				d = phaseHologram(d, iN, outerPhaseShift );
+				d = phaseHologram(d, iN, phaseShift );
 			}
 			else if(oi == 1) { 
 				// the second cylinder
 				// b *= vec4(.5, 0.5, 1., 1.0);
-				d = phaseHologram(d, iN, innerPhaseShift);
+				d = phaseHologram(d, iN, -phaseShift);
 			}
 
 			else if (oi == 2) 
