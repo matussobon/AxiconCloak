@@ -35,6 +35,7 @@ import {
   refreshInfo,
   toggleInfoVisibility,
   showCloak2String,
+  showLens2String,
   showInnerCylinder2String,
   showOuterCylinder2String,
 } from "./infofunctions.js";
@@ -111,6 +112,8 @@ let autofocusControl,
 let showCloakControl;
 let showInnerCylinderControl;
 let showOuterCylinderControl;
+
+let showLensControl;
 
 let GUIMesh;
 let showGUIMesh;
@@ -371,6 +374,7 @@ function addRaytracingSphere() {
       showOuterCylinder: { value: true },
       yShift: { value: yShift },
       showCloak: { value: true },
+      showLens: { value: false },
       backgroundTexture: { value: backgroundTexture },
       focusDistance: { value: 10.0 },
       apertureXHat: { value: new THREE.Vector3(1, 0, 0) },
@@ -461,6 +465,14 @@ function createGUI() {
       showCloakControl.name(
         showCloak2String(infoObject.raytracingSphereShaderMaterial)
       );
+    },
+    showLens: () => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.showLens.value =
+        !infoObject.raytracingSphereShaderMaterial.uniforms.showLens.value;
+      showLensControl.name(
+        showLens2String(infoObject.raytracingSphereShaderMaterial)
+      );
+      console.log("works");
     },
 
     showInnerCylinder: () => {
@@ -640,6 +652,12 @@ function createGUI() {
       infoObject.raytracingSphereShaderMaterial.uniforms.innerHeightPositive.value =
         h_inner_pos;
     });
+
+  const lensFolder = gui.addFolder("Lens Controls ");
+
+  showLensControl = lensFolder
+    .add(GUIParams, "showLens")
+    .name(showLens2String(infoObject.raytracingSphereShaderMaterial));
 
   gui.add(GUIParams, "Point forward (in -<b>z</b> direction)");
   backgroundControl = gui

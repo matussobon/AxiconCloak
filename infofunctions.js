@@ -201,6 +201,10 @@ export function showCloak2String(ShaderMat) {
   );
 }
 
+export function showLens2String(ShaderMat) {
+  return "Lenses " + (ShaderMat.uniforms.showLens.value ? "shown" : "hidden");
+}
+
 // could probably merge these into showCylinder2String
 export function showInnerCylinder2String(ShaderMat) {
   return (

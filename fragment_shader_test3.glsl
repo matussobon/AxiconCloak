@@ -7,6 +7,8 @@ varying vec3 intersectionPoint;
 uniform int maxTraceLevel;
 
 
+uniform bool showLens;
+
 uniform float sphereRadius;
 uniform bool showSphere;
 uniform float sphereHeight;
@@ -107,6 +109,47 @@ bool findNearestIntersectionWithSphere(
 
 	// there is an intersection in the forward direction, at
 	intersectionPosition = s + delta*d;
+	intersectionDistance = delta*length(d);
+	return true;
+}
+
+bool findNearestIntersectionWithLens(
+	vec3 s, // ray start point, origin 
+	vec3 d, // ray direction 
+	vec3 lensCenter,
+	float lensSize, // assuming rectangular aperture
+	out vec3 intersectionPosition,
+	out float intersectionDistance
+) {
+
+	vec2 halfSize = vec2 (lensSize, lensSize); 
+	
+	// define the span vectors from the center of the lens
+	vec3 uSpan = vec3 (lensCenter.x + halfSize.x, lensCenter.y, lensCenter.z);
+	vec3 vSpan = vec3 (lensCenter.x, lensCenter.y + halfSize.y, lensCenter.z);
+
+	// calculate the normalized normal vector to the lens surface
+	vec3 lensNormal = cross(uSpan, vSpan)/length(cross(uSpan, vSpan));
+
+	//if the ray is parallel to the lens surface there is no intersection 
+	if (dot(d, lensNormal)==0.) {
+		return false;
+	}
+	// calculate delta to check for intersections 
+	float delta = dot(lensCenter - s, lensNormal)/(dot(d, lensNormal));
+	intersectionPosition = s + delta*d;
+
+	if (delta<0.) {
+		return false;
+	} 
+	
+	// shifting the origin of the coordinate system to the lens center
+	vec2 w = abs(intersectionPosition.xy - lensCenter.xy); 
+
+	if (w.x > halfSize.x || w.y  > halfSize.y) {
+		return false;
+	}
+
 	intersectionDistance = delta*length(d);
 	return true;
 }
@@ -244,6 +287,15 @@ bool findNearestIntersectionWithObjects(
 		}
 	}
 
+	if ( showLens && findNearestIntersectionWithLens(s, d, sphereCentre, sphereRadius, intersectionPosition, intersectionDistance )) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 3;
+		}
+
+	}
+
 	return (closestIntersectionDistance < 1e20);
 }
 
@@ -337,6 +389,12 @@ void main() {
 				tl = -10;
 			}
 
+			else if (oi == 3)
+			{
+				color = vec4(0.1255, 0.749, 0.3333, 1.0);
+				tl = -10;
+			}
+				
 			s=ip;
 		}
 		
