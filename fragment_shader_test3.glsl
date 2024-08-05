@@ -6,7 +6,7 @@ varying vec3 intersectionPoint;
 
 uniform int maxTraceLevel;
 
-
+uniform float rotAngle;
 uniform bool showLens;
 
 uniform float sphereRadius;
@@ -15,6 +15,7 @@ uniform float sphereHeight;
 uniform vec3 sphereCentre;
 // show/hide the whole Axicon Cloak
 uniform bool showCloak;
+
 
 // Axicon Cloak centre 
 uniform bool cloakCentre;
@@ -116,40 +117,52 @@ bool findNearestIntersectionWithSphere(
 bool findNearestIntersectionWithLens(
 	vec3 s, // ray start point, origin 
 	vec3 d, // ray direction 
-	vec3 lensCenter,
+	vec3 lensCorner,
 	float lensSize, // assuming rectangular aperture
+	float rotAngle, // for now rotation around Y-axis 
 	out vec3 intersectionPosition,
 	out float intersectionDistance
 ) {
+	float cosTheta = cos(radians(-rotAngle));
+	float sinTheta = sin(radians(-rotAngle));
 
-	vec2 halfSize = vec2 (lensSize, lensSize); 
-	
-	// define the span vectors from the center of the lens
-	vec3 uSpan = vec3 (lensCenter.x + halfSize.x, lensCenter.y, lensCenter.z);
-	vec3 vSpan = vec3 (lensCenter.x, lensCenter.y + halfSize.y, lensCenter.z);
+	mat3 rotMatrix = mat3(
+		cosTheta, 0., sinTheta,
+		0., 	 1., 	0.,
+		-sinTheta,0., cosTheta
+	);
 
-	// calculate the normalized normal vector to the lens surface
-	vec3 lensNormal = cross(uSpan, vSpan)/length(cross(uSpan, vSpan));
+	vec3 lensNormal = rotMatrix * vec3 (0, 0, 1);
 
-	//if the ray is parallel to the lens surface there is no intersection 
-	if (dot(d, lensNormal)==0.) {
+	// calculate the span vectors
+	vec3 uSpan = rotMatrix * vec3(lensCorner.x + lensSize, lensCorner.y, lensCorner.z);
+	vec3 vSpan = rotMatrix * vec3(lensCorner.x, lensCorner.y+lensSize, lensCorner.z);
+
+	// if the ray is parallel to the lens surface there is no intersection 
+	if (dot(d, lensNormal)==1e-6) {
 		return false;
 	}
 	// calculate delta to check for intersections 
-	float delta = dot(lensCenter - s, lensNormal)/(dot(d, lensNormal));
+	float delta = dot(lensCorner - s, lensNormal)/(dot(d, lensNormal));
 	intersectionPosition = s + delta*d;
 
 	if (delta<0.) {
 		return false;
 	} 
 	
-	// shifting the origin of the coordinate system to the lens center
-	vec2 w = abs(intersectionPosition.xy - lensCenter.xy); 
-
-	if (w.x > halfSize.x || w.y  > halfSize.y) {
+	// now build the lens from the corner instead of its center
+	// fix this for the rotation ... 
+	if (rotAngle>90. && rotAngle<270.) {
+			if ((intersectionPosition.x < uSpan.x || intersectionPosition.x > vSpan.x) || (intersectionPosition.y < vSpan.y || intersectionPosition.y > uSpan.y)) {
+			return false;
+	}
+	}
+	else {
+		if ((intersectionPosition.x > uSpan.x || intersectionPosition.x < vSpan.x) || (intersectionPosition.y > vSpan.y || intersectionPosition.y < uSpan.y)) {
 		return false;
 	}
-
+	}
+	
 	intersectionDistance = delta*length(d);
 	return true;
 }
@@ -287,7 +300,7 @@ bool findNearestIntersectionWithObjects(
 		}
 	}
 
-	if ( showLens && findNearestIntersectionWithLens(s, d, sphereCentre, sphereRadius, intersectionPosition, intersectionDistance )) {
+	if ( showLens && findNearestIntersectionWithLens(s, d, sphereCentre, sphereRadius, 0., intersectionPosition, intersectionDistance)) {
 		if (intersectionDistance < closestIntersectionDistance)  {
 			closestIntersectionPosition = intersectionPosition;
 			closestIntersectionDistance = intersectionDistance;
@@ -296,6 +309,15 @@ bool findNearestIntersectionWithObjects(
 
 	}
 
+
+	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*2., rotAngle, intersectionPosition, intersectionDistance )) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 4;
+		}
+
+	}
 	return (closestIntersectionDistance < 1e20);
 }
 
@@ -392,6 +414,12 @@ void main() {
 			else if (oi == 3)
 			{
 				color = vec4(0.1255, 0.749, 0.3333, 1.0);
+				tl = -10;
+			}
+
+			else if (oi == 4)
+			{
+				color = vec4(0.35, 0.13, 0.75, 1.0);
 				tl = -10;
 			}
 				

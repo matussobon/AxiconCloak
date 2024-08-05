@@ -93,6 +93,7 @@ let innerHeightPositive = 0.2;
 let innerYcoord = 0;
 
 let phaseShift = 0.6;
+let rotAngle = 0;
 
 let raytracingSphereRadius = 100.0;
 
@@ -360,7 +361,7 @@ function addRaytracingSphere() {
       sphereCentre: { value: new THREE.Vector3(0, 0, 0) },
       sphereRadius: { value: sphereRadius },
       sphereHeight: { value: sphereHeight },
-      showSphere: { value: true },
+      showSphere: { value: false },
       outerRadius: { value: outerRadius },
       outerHeightNegative: { value: outerHeightNegative },
       outerHeightPositive: { value: outerHeightPositive },
@@ -373,8 +374,9 @@ function addRaytracingSphere() {
       showInnerCylinder: { value: true },
       showOuterCylinder: { value: true },
       yShift: { value: yShift },
-      showCloak: { value: true },
-      showLens: { value: false },
+      showCloak: { value: false },
+      showLens: { value: true },
+      rotAngle: { value: rotAngle },
       backgroundTexture: { value: backgroundTexture },
       focusDistance: { value: 10.0 },
       apertureXHat: { value: new THREE.Vector3(1, 0, 0) },
@@ -440,6 +442,7 @@ function createGUI() {
     sphereRadius: sphereRadius,
     sphereHeight: sphereHeight,
     outerRadius: outerRadius,
+    rotAngle: rotAngle,
     yShift: yShift,
     outerHeightNegative: outerHeightNegative,
     outerHeightPositive: outerHeightPositive,
@@ -658,6 +661,14 @@ function createGUI() {
   showLensControl = lensFolder
     .add(GUIParams, "showLens")
     .name(showLens2String(infoObject.raytracingSphereShaderMaterial));
+
+  lensFolder
+    .add(GUIParams, "rotAngle", 0, 360, 5)
+    .name("Rotation angle")
+    .onChange((lens_rot) => {
+      infoObject.raytracingSphereShaderMaterial.uniforms.rotAngle.value =
+        lens_rot;
+    });
 
   gui.add(GUIParams, "Point forward (in -<b>z</b> direction)");
   backgroundControl = gui
