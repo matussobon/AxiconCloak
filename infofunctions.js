@@ -101,7 +101,7 @@ export function getInfoString(infoObject) {
     // '<a href="https://www.flickr.com/photos/pano_philou/1041580126">"360-180 Glasgow University - Western Square"</a> by pano_philou<br>\n' +
     'License: <a href="https://creativecommons.org/licenses/by-nc-sa/2.0/">CC BY-NC-SA 2.0 DEED</a><br>\n' +
     // `<h4>${appName}</h4>\n` +
-    `<br>${appName} (University of Glasgow, <a href="https://github.com/jkcuk/${appName}">https://github.com/jkcuk/${appName}</a>) is ${appDescription}.`
+    `<br>${appName} (University of Glasgow, <a href="https://github.com/matussobon/${appName}">https://github.com/matusobon/${appName}</a>) is ${appDescription}.`
   );
 }
 

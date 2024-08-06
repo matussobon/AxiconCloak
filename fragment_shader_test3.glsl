@@ -151,18 +151,17 @@ bool findNearestIntersectionWithLens(
 	} 
 	
 	// now build the lens from the corner instead of its center
-	// fix this for the rotation ... 
+	// probably not the most effective way to do this, but hey, it works 
 	if (rotAngle>90. && rotAngle<270.) {
-			if ((intersectionPosition.x < uSpan.x || intersectionPosition.x > vSpan.x) || (intersectionPosition.y < vSpan.y || intersectionPosition.y > uSpan.y)) {
-			return false;
+		if ((intersectionPosition.x < uSpan.x || intersectionPosition.x > vSpan.x) || (intersectionPosition.y > vSpan.y || intersectionPosition.y < uSpan.y)) {
+		return false;
 	}
 	}
 	else {
 		if ((intersectionPosition.x > uSpan.x || intersectionPosition.x < vSpan.x) || (intersectionPosition.y > vSpan.y || intersectionPosition.y < uSpan.y)) {
 		return false;
+		}
 	}
-	}
-	
 	intersectionDistance = delta*length(d);
 	return true;
 }
