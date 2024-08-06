@@ -8,6 +8,7 @@ uniform int maxTraceLevel;
 
 uniform float rotAngle;
 uniform bool showLens;
+uniform float cornerDistance; // distance between the lenses
 
 uniform float sphereRadius;
 uniform bool showSphere;
@@ -309,7 +310,16 @@ bool findNearestIntersectionWithObjects(
 	}
 
 
-	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*2., rotAngle, intersectionPosition, intersectionDistance )) {
+	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*1.5, rotAngle, intersectionPosition, intersectionDistance )) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 4;
+		}
+
+	}
+
+	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*2., rotAngle+20., intersectionPosition, intersectionDistance )) {
 		if (intersectionDistance < closestIntersectionDistance)  {
 			closestIntersectionPosition = intersectionPosition;
 			closestIntersectionDistance = intersectionDistance;

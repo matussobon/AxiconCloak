@@ -663,7 +663,7 @@ function createGUI() {
     .name(showLens2String(infoObject.raytracingSphereShaderMaterial));
 
   lensFolder
-    .add(GUIParams, "rotAngle", 0, 360, 5)
+    .add(GUIParams, "rotAngle", 0, 360, 1)
     .name("Rotation angle")
     .onChange((lens_rot) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.rotAngle.value =
