@@ -240,23 +240,8 @@ function updateUniforms() {
   let deltaY;
   // if(renderer.xr.enabled && renderer.xr.isPresenting) {
   deltaY = infoObject.resonatorY;
-  // } else {
-  // 	deltaY = 0;
-  // }
 
   GUIMesh.position.y = deltaY - 1;
-
-  //LOOOK HERE
-  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.x =
-  //   infoObject.sphereCentre.x;
-  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.y =
-  //   infoObject.sphereCentre.y + deltaY;
-  // infoObject.raytracingSphereShaderMaterial.uniforms.sphereCentre.value.z =
-  //   infoObject.sphereCentre.z;
-
-  // mesh.rotation.y = -Math.atan2(camera.position.z, camera.position.x);
-  // mesh.rotation.z = meshRotationZ;
-
   infoObject.raytracingSphereShaderMaterial.uniforms.backgroundTexture.value =
     backgroundTexture;
 
@@ -268,25 +253,24 @@ function updateUniforms() {
   let apertureBasisVector2 = new THREE.Vector3();
   infoObject.camera.getWorldDirection(viewDirection);
   viewDirection.normalize();
-  // postStatus(`viewDirection.lengthSq() = ${viewDirection.lengthSq()}`);
-  // if(counter < 10) console.log(`viewDirection = (${viewDirection.x.toPrecision(2)}, ${viewDirection.y.toPrecision(2)}, ${viewDirection.z.toPrecision(2)})`);
 
-  if (viewDirection.x == 0.0 && viewDirection.y == 0.0) {
-    // viewDirection is along z direction
-    apertureBasisVector1
-      .crossVectors(viewDirection, new THREE.Vector3(1, 0, 0))
-      .normalize();
-  } else {
-    // viewDirection is not along z direction
-    apertureBasisVector1
-      .crossVectors(viewDirection, new THREE.Vector3(0, 0, 1))
-      .normalize();
-  }
+  // this bit should be useless?
+  // if (viewDirection.x == 0.0 && viewDirection.y == 0.0) {
+  //   // viewDirection is along z direction
+  //   apertureBasisVector1
+  //     .crossVectors(viewDirection, new THREE.Vector3(1, 0, 0))
+  //     .normalize();
+  // } else {
+  //   // viewDirection is not along z direction
+  //   apertureBasisVector1
+  //     .crossVectors(viewDirection, new THREE.Vector3(0, 0, 1))
+  //     .normalize();
+  // }
+
   apertureBasisVector1
     .crossVectors(THREE.Object3D.DEFAULT_UP, viewDirection)
     .normalize();
-  // viewDirection = new THREE.Vector3(0, 0, -1);
-  // apertureBasisVector1 = new THREE.Vector3(1, 0, 0);
+
   apertureBasisVector2
     .crossVectors(viewDirection, apertureBasisVector1)
     .normalize();
@@ -340,13 +324,6 @@ function addRaytracingSphere() {
     }
   } while (i < 100);
 
-  // let n2Vectors = [];	// principal points
-  // let n2Floats = [];
-  // for(i=0; i<mirrorsN2; i++) {
-  // 	n2Vectors.push(new THREE.Vector3(0., 0., 0.));
-  // 	n2Floats.push(0.);
-  // }
-
   // the sphere surrounding the camera in all directions
   const geometry = new THREE.SphereGeometry(raytracingSphereRadius);
   infoObject.raytracingSphereShaderMaterial = new THREE.ShaderMaterial({
@@ -387,6 +364,25 @@ function addRaytracingSphere() {
       noOfRays: { value: 1 },
       viewDirection: { value: new THREE.Vector3(0, 0, -1) },
       keepVideoFeedForward: { value: true },
+      Camera: {
+        value: {
+          viewDirection: new THREE.Vector3(0, 0, -1),
+          apertureXHat: new THREE.Vector3(1, 0, 0),
+          apertureYHat: new THREE.Vector3(0, 1, 0),
+          focusDistance: 10.0,
+          apertureRadius: infoObject.apertureRadius,
+          randomNumbersX: randomNumbersX,
+          randomNumbersY: randomNumbersY,
+          noOfRays: 1,
+        },
+      },
+      Sphere: {
+        value: {
+          visible: true,
+          centre: new THREE.Vector3(0, 0, 0),
+          size: sphereRadius,
+        },
+      },
     },
     vertexShader: vertexShaderCode,
     fragmentShader: fragmentShaderCode,

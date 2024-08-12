@@ -55,6 +55,34 @@ uniform float randomNumbersX[100];
 uniform float randomNumbersY[100];
 // uniform float apertureRadius;
 
+// camera aperture struct
+struct CameraAperture {
+	vec3 viewDirection;
+	vec3 apertureXHat;
+	vec3 apertureYHat;
+	float focustDistance;
+	float apertureRadius;
+	float randomNumbersX[100];
+	float randomNumbersY[100];
+	int noOfRays;
+};
+
+uniform CameraAperture Camera;
+
+struct Ray {
+	vec3 origin;
+	vec3 direction;
+};
+
+struct addObject {
+	bool visible;
+	vec3 centre;
+	float size;
+};
+
+uniform addObject Sphere;
+uniform addObject Rectangle;
+uniform addObject Cylinder;
 
 vec3 zHat = vec3(0., 0., 1.);
 
@@ -136,11 +164,11 @@ bool findNearestIntersectionWithLens(
 	vec3 lensNormal = rotMatrix * vec3 (0, 0, 1);
 
 	// calculate the span vectors
-	vec3 uSpan = rotMatrix * vec3(lensCorner.x + lensSize, lensCorner.y, lensCorner.z);
-	vec3 vSpan = rotMatrix * vec3(lensCorner.x, lensCorner.y+lensSize, lensCorner.z);
+	vec3 uSpan = rotMatrix * vec3(1., 0., 0.);
+	vec3 vSpan = rotMatrix * vec3(0., 1., 0.);
 
 	// if the ray is parallel to the lens surface there is no intersection 
-	if (dot(d, lensNormal)==1e-6) {
+	if (dot(d, lensNormal)==0.) {
 		return false;
 	}
 	// calculate delta to check for intersections 
@@ -150,19 +178,13 @@ bool findNearestIntersectionWithLens(
 	if (delta<0.) {
 		return false;
 	} 
-	
-	// now build the lens from the corner instead of its center
-	// probably not the most effective way to do this, but hey, it works 
-	if (rotAngle>90. && rotAngle<270.) {
-		if ((intersectionPosition.x < uSpan.x || intersectionPosition.x > vSpan.x) || (intersectionPosition.y > vSpan.y || intersectionPosition.y < uSpan.y)) {
+	float uProj = dot((intersectionPosition - lensCorner),uSpan);
+	float vProj = dot(intersectionPosition - lensCorner, vSpan);
+
+	if (uProj<0. || uProj>lensSize || vProj<0. || vProj>lensSize){
 		return false;
 	}
-	}
-	else {
-		if ((intersectionPosition.x > uSpan.x || intersectionPosition.x < vSpan.x) || (intersectionPosition.y > vSpan.y || intersectionPosition.y < uSpan.y)) {
-		return false;
-		}
-	}
+
 	intersectionDistance = delta*length(d);
 	return true;
 }
@@ -363,22 +385,27 @@ vec3 phaseHologram(vec3 d, vec3 closestIntersectionNormal, float deltaKy) {
 
 
 void main() {
-
+	Ray LightRay;
 	// first calculate the focusPosition, i.e. the point this pixel is focussed on
 	vec3 pv = intersectionPoint - cameraPosition;	// the "pixel view direction", i.e. a vector from the centre of the camera aperture to the point on the object the shader is currently "shading"
 	vec3 focusPosition = cameraPosition + focusDistance/abs(dot(pv, viewDirection))*pv;	// see Johannes's lab book 30/4/24 p.174
+	
+
 
 	// trace <noOfRays> rays
 	gl_FragColor = vec4(0, 0, 0, 0);
 	vec4 color;
 	for(int i=0; i<noOfRays; i++) {
 		// the current ray start position, a random point on the camera's circular aperture
-		vec3 s = cameraPosition + apertureRadius*randomNumbersX[i]*apertureXHat + apertureRadius*randomNumbersY[i]*apertureYHat;
+
+		LightRay.origin = cameraPosition + Camera.apertureRadius*Camera.randomNumbersX[i]*Camera.apertureXHat + Camera.apertureRadius*Camera.randomNumbersY[i]*Camera.apertureYHat;
+
+		// LightRay.origin = cameraPosition + apertureRadius*randomNumbersX[i]*apertureXHat + apertureRadius*randomNumbersY[i]*apertureYHat;
 
 		// first calculate the current light-ray direction:
 		// the ray first passes through focusPosition and then p,
 		// so the "backwards" ray direction from the camera to the intersection point is
-		vec3 d = focusPosition - s;
+		LightRay.direction = focusPosition - LightRay.origin;
 		// we normalise this here such that ???
 		// d = pv.z/d.z*d;
 
@@ -393,7 +420,7 @@ void main() {
 		int tl = maxTraceLevel;	// max trace level
 		while(
 			(tl-- > 0) &&
-			findNearestIntersectionWithObjects(s, d, 
+			findNearestIntersectionWithObjects(LightRay.origin, LightRay.direction, 
 				oi,
 				ip,	// out vec3 intersectionPosition
 				id,	// out float intersectionDistance
@@ -404,12 +431,12 @@ void main() {
 			if(oi == 0) { 
 				// the first cylinder
 				// b *= vec4(1., .5, .5, 1.);
-				d = phaseHologram(d, iN, phaseShift );
+				LightRay.direction = phaseHologram(LightRay.direction, iN, phaseShift );
 			}
 			else if(oi == 1) { 
 				// the second cylinder
 				// b *= vec4(.5, 0.5, 1., 1.0);
-				d = phaseHologram(d, iN, -phaseShift);
+				LightRay.direction = phaseHologram(LightRay.direction, iN, -phaseShift);
 			}
 
 			else if (oi == 2) 
@@ -432,11 +459,11 @@ void main() {
 				tl = -10;
 			}
 				
-			s=ip;
+			LightRay.origin=ip;
 		}
 		
 		if(tl > 0) {
-			color = getColorOfBackground(d);
+			color = getColorOfBackground(LightRay.direction);
 		} 
 		// else if(tl != -11) {
 		// // 	// max number of bounces
