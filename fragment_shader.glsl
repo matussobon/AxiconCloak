@@ -6,9 +6,40 @@ varying vec3 intersectionPoint;
 
 uniform int maxTraceLevel;
 
-uniform vec3 sphereCentre;
+uniform float rotAngle;
+uniform bool showLens;
+uniform float cornerDistance; // distance between the lenses
+
 uniform float sphereRadius;
 uniform bool showSphere;
+uniform float sphereHeight;
+uniform vec3 sphereCentre;
+// show/hide the whole Axicon Cloak
+uniform bool showCloak;
+
+
+// Axicon Cloak centre 
+uniform bool cloakCentre;
+uniform float yShift;
+uniform float phaseShift;
+
+// to do: show/hide the individual cylinders
+uniform bool showOuterCylinder;
+uniform bool showInnerCylinder;
+
+// outer cylinder properties
+uniform float outerRadius; 
+uniform float outerHeightNegative;
+uniform float outerHeightPositive;
+uniform float outerYcoord;
+
+
+// inner cylinder properties
+uniform float innerRadius;
+uniform float innerHeightNegative; 
+uniform float innerHeightPositive;
+uniform float innerYcoord;
+
 
 // background
 uniform sampler2D backgroundTexture;
@@ -23,6 +54,38 @@ uniform float apertureRadius;
 uniform float randomNumbersX[100];
 uniform float randomNumbersY[100];
 // uniform float apertureRadius;
+
+// camera aperture struct
+struct CameraAperture {
+	vec3 viewDirection;
+	vec3 apertureXHat;
+	vec3 apertureYHat;
+	float focustDistance;
+	float apertureRadius;
+	float randomNumbersX[100];
+	float randomNumbersY[100];
+	int noOfRays;
+};
+
+uniform CameraAperture Camera;
+
+struct Ray {
+	vec3 origin;
+	vec3 direction;
+};
+
+struct addObject {
+	bool visible;
+	vec3 centre;
+	float size; 
+};
+// size variable has different meaning for each object i.e.
+// Sphere, Cylinder: size = radius 
+// Rectangle: size = side-length
+
+uniform addObject Sphere;
+uniform addObject Rectangle;
+uniform addObject Cylinder;
 
 vec3 zHat = vec3(0., 0., 1.);
 
@@ -39,15 +102,18 @@ bool findNearestIntersectionWithSphere(
 	vec3 s, 	// ray start point
 	vec3 d, 	// ray direction
 	vec3 c,		// sphere centre
+	float y,  	// y coordinate of sphere centre 
+	float yShift,
 	float r,	// sphere radius
 	out vec3 intersectionPosition,
 	out float intersectionDistance
 ) {
+	c = c + vec3(0, y+yShift , 0);
 	// for maths see geometry.pdf
 	vec3 v = s - c;
 	float A = dot(d, d);
 	float B = 2.*dot(d, v);
-	float C = dot(v, v);
+	float C = dot(v, v) - r*r;
 
 	// calculate the discriminant
 	float D= B*B - 4.*A*C;
@@ -64,7 +130,7 @@ bool findNearestIntersectionWithSphere(
 
 	// try the "-" solution first, as this will be closer, provided it is positive (i.e. in the forward direction)
 	float delta = (-B - sd)/(2.*A);
-	bool intersection;
+	//bool intersection;
 	if(delta < 0.) {
 		// the delta for the "-" solution is negative, so that is a "backwards" solution; try the "+" solution
 		delta = (-B + sd)/(2.*A);
@@ -80,11 +146,59 @@ bool findNearestIntersectionWithSphere(
 	return true;
 }
 
+bool findNearestIntersectionWithLens(
+	vec3 s, // ray start point, origin 
+	vec3 d, // ray direction 
+	vec3 lensCorner,
+	float lensSize, // assuming rectangular aperture
+	float rotAngle, // for now rotation around Y-axis 
+	out vec3 intersectionPosition,
+	out float intersectionDistance
+) {
+	float cosTheta = cos(radians(-rotAngle));
+	float sinTheta = sin(radians(-rotAngle));
+
+	mat3 rotMatrix = mat3(
+		cosTheta, 0., sinTheta,
+		0., 	 1., 	0.,
+		-sinTheta,0., cosTheta
+	);
+
+	vec3 lensNormal = rotMatrix * vec3 (0, 0, 1);
+
+	// calculate the span vectors
+	vec3 uSpan = rotMatrix * vec3(1., 0., 0.);
+	vec3 vSpan = rotMatrix * vec3(0., 1., 0.);
+
+	// if the ray is parallel to the lens surface there is no intersection 
+	if (dot(d, lensNormal)==0.) {
+		return false;
+	}
+	// calculate delta to check for intersections 
+	float delta = dot(lensCorner - s, lensNormal)/(dot(d, lensNormal));
+	intersectionPosition = s + delta*d;
+
+	if (delta<0.) {
+		return false;
+	} 
+	float uProj = dot((intersectionPosition - lensCorner),uSpan);
+	float vProj = dot(intersectionPosition - lensCorner, vSpan);
+
+	if (uProj<0. || uProj>lensSize || vProj<0. || vProj>lensSize){
+		return false;
+	}
+
+	intersectionDistance = delta*length(d);
+	return true;
+}
+
 bool findNearestIntersectionWithCylinder(	
 	vec3 s, 	// ray start point
 	vec3 d, 	// ray direction
 	vec3 c,		// cylinder centre
 	float r,	// cylinder radius
+	float yShift,
+	float yCoord,
 	float y_min, // cylinder height
 	float y_max, // cylinder height 
 	bool startPointIsIntersectionWithCylinder,
@@ -92,7 +206,8 @@ bool findNearestIntersectionWithCylinder(
 	out float intersectionDistance,
 	out vec3 intersectionNormal
 ) {
-		
+	y_min = y_min + yShift + yCoord;
+	y_max = y_max + yShift+ yCoord;
 	// for maths see geometry.pdf
 	vec2 v2 = s.xz - c.xz;
 	vec2 d2 = d.xz;
@@ -102,7 +217,7 @@ bool findNearestIntersectionWithCylinder(
 	float delta = 1e20;
 
 	if(startPointIsIntersectionWithCylinder) {
-		// if the ray start point lies son the cylinder, then C = 0
+		// if the ray start point lies on the cylinder, then C = 0
 		delta = -B/A;
 		if(delta > 0.) {
 			float y = s.y + delta*d.y;
@@ -176,13 +291,11 @@ bool findNearestIntersectionWithObjects(
 	float intersectionDistance;	// ... intersection distance, ...
 	vec3 intersectionNormal; //... intersection normal...
 
-	intersectingObjectIndex = startIntersectionObjectIndex;
-
 	// is there an intersection with the cylinder1
-	if( true && findNearestIntersectionWithCylinder(s, d, sphereCentre, sphereRadius, -0.2, 0.2, intersectingObjectIndex == 0, intersectionPosition, intersectionDistance, intersectionNormal) ) {
+	if( showCloak && showInnerCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, innerRadius, yShift,innerYcoord, innerHeightNegative, innerHeightPositive, startIntersectionObjectIndex == 0, intersectionPosition, intersectionDistance, intersectionNormal) ) {
 		// yes, there is an intersection with the cylinder
 		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
-		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || intersectingObjectIndex != 0)) {
+		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 0)) {
 			// the intersection with the z mirrors is the closest one so far
 			closestIntersectionPosition = intersectionPosition;
 			closestIntersectionDistance = intersectionDistance;
@@ -191,10 +304,10 @@ bool findNearestIntersectionWithObjects(
 		}
 	}
 	// is there an intersection with the cylinder2
-	if( true && findNearestIntersectionWithCylinder(s, d, sphereCentre, 2.*sphereRadius, -0.1, .1, intersectingObjectIndex == 1, intersectionPosition, intersectionDistance, intersectionNormal) ) {
+	if( showCloak && showOuterCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, outerRadius,yShift, outerYcoord, outerHeightNegative, outerHeightPositive + yShift, startIntersectionObjectIndex == 1, intersectionPosition, intersectionDistance, intersectionNormal) ) {
 		// yes, there is an intersection with the cylinder
 		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
-		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || intersectingObjectIndex != 1)) {
+		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 1)) {
 			// the intersection with the z mirrors is the closest one so far
 			closestIntersectionPosition = intersectionPosition;
 			closestIntersectionDistance = intersectionDistance;
@@ -202,26 +315,100 @@ bool findNearestIntersectionWithObjects(
 			intersectingObjectIndex = 1;	// sphere
 		}
 	}
-	
+
+	// if (showSphere && findNearestIntersectionWithSphere(s, d, sphereCentre, sphereRadius, intersectionPosition, intersectionDistance))
+	if( showSphere && findNearestIntersectionWithSphere(s, d, sphereCentre, sphereHeight, yShift, sphereRadius, intersectionPosition, intersectionDistance) ) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 2;
+		}
+	}
+
+	if ( showLens && findNearestIntersectionWithLens(s, d, sphereCentre, sphereRadius, 0., intersectionPosition, intersectionDistance)) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 3;
+		}
+
+	}
+
+
+	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*1.5, rotAngle, intersectionPosition, intersectionDistance )) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 4;
+		}
+
+	}
+
+	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*2., rotAngle+20., intersectionPosition, intersectionDistance )) {
+		if (intersectionDistance < closestIntersectionDistance)  {
+			closestIntersectionPosition = intersectionPosition;
+			closestIntersectionDistance = intersectionDistance;
+			intersectingObjectIndex = 4;
+		}
+
+	}
 	return (closestIntersectionDistance < 1e20);
 }
 
+// d - incident ray direction 
+// closestIntersectionNormal - normal to the surface with of norm = 1
+// deltaKy - phase shift of the hologram
+// ideally, we just use this function for each cylinder and get the outgoing ray direction
+// by setting the deltaKy with opposite sign 
+vec3 phaseHologram(vec3 d, vec3 closestIntersectionNormal, float deltaKy) {
+
+	//normalize the the ray direction vector d
+	vec3 dNorm = normalize(d);
+	//calculate the projection of dNorm onto the closestIntersectionNormal
+	float dNormProj = dot(dNorm, closestIntersectionNormal);
+
+	
+	vec3 dTransverse = dNorm - closestIntersectionNormal*dNormProj; 
+	vec3 dPrimeTransverse = dTransverse +  vec3 (0.0, deltaKy ,0.0); 
+	
+	//check for evanescence
+	float dPrimeTransverseNorm = dot(dPrimeTransverse,dPrimeTransverse);
+	if (dPrimeTransverseNorm > 1.) {
+		//if true
+		return reflect(dNorm, closestIntersectionNormal);
+		
+	}
+
+
+	float dPrimeNormal = sqrt(1.0-dPrimeTransverseNorm);
+
+	vec3 dPrime = dPrimeTransverse  + sign(dNormProj)*dPrimeNormal*closestIntersectionNormal;
+	return dPrime;
+}
+
+
 void main() {
+	Ray LightRay;
 	// first calculate the focusPosition, i.e. the point this pixel is focussed on
 	vec3 pv = intersectionPoint - cameraPosition;	// the "pixel view direction", i.e. a vector from the centre of the camera aperture to the point on the object the shader is currently "shading"
 	vec3 focusPosition = cameraPosition + focusDistance/abs(dot(pv, viewDirection))*pv;	// see Johannes's lab book 30/4/24 p.174
+	
+
 
 	// trace <noOfRays> rays
 	gl_FragColor = vec4(0, 0, 0, 0);
 	vec4 color;
 	for(int i=0; i<noOfRays; i++) {
 		// the current ray start position, a random point on the camera's circular aperture
-		vec3 s = cameraPosition + apertureRadius*randomNumbersX[i]*apertureXHat + apertureRadius*randomNumbersY[i]*apertureYHat;
+
+		LightRay.origin = cameraPosition + Camera.apertureRadius*Camera.randomNumbersX[i]*Camera.apertureXHat + Camera.apertureRadius*Camera.randomNumbersY[i]*Camera.apertureYHat;
+
+		// LightRay.origin = cameraPosition + apertureRadius*randomNumbersX[i]*apertureXHat + apertureRadius*randomNumbersY[i]*apertureYHat;
 
 		// first calculate the current light-ray direction:
 		// the ray first passes through focusPosition and then p,
 		// so the "backwards" ray direction from the camera to the intersection point is
-		vec3 d = focusPosition - s;
+		LightRay.direction = focusPosition - LightRay.origin;
 		// we normalise this here such that ???
 		// d = pv.z/d.z*d;
 
@@ -231,15 +418,12 @@ void main() {
 		vec3 ip;
 		float id;
 		vec3 iN;
-		float mop;
-		vec3 mp;
-		vec3 mNHat;
 		int oi = -1;
 		// int si = -1;
 		int tl = maxTraceLevel;	// max trace level
 		while(
 			(tl-- > 0) &&
-			findNearestIntersectionWithObjects(s, d, 
+			findNearestIntersectionWithObjects(LightRay.origin, LightRay.direction, 
 				oi,
 				ip,	// out vec3 intersectionPosition
 				id,	// out float intersectionDistance
@@ -249,24 +433,46 @@ void main() {
 		) {
 			if(oi == 0) { 
 				// the first cylinder
-				b *= vec4(1., .4, .4, 1.);
+				// b *= vec4(1., .5, .5, 1.);
+				LightRay.direction = phaseHologram(LightRay.direction, iN, phaseShift );
 			}
 			else if(oi == 1) { 
 				// the second cylinder
-				b *= vec4(.4, 0.4, 1., 1.0);
+				// b *= vec4(.5, 0.5, 1., 1.0);
+				LightRay.direction = phaseHologram(LightRay.direction, iN, -phaseShift);
 			}
 
-			s=ip;
+			else if (oi == 2) 
+			{
+				// the sphere 
+				color = vec4(1., 0., 0., 1.);
+				//b *= vec4(.5, 0.5, 1., 1.0);
+				tl = -10;
+			}
+
+			else if (oi == 3)
+			{
+				color = vec4(0.1255, 0.749, 0.3333, 1.0);
+				tl = -10;
+			}
+
+			else if (oi == 4)
+			{
+				color = vec4(0.35, 0.13, 0.75, 1.0);
+				tl = -10;
+			}
+				
+			LightRay.origin=ip;
 		}
 		
-		// if(tl > 0) {
-		// 	color = getColorOfBackground(d);
-		// } 
+		if(tl > 0) {
+			color = getColorOfBackground(LightRay.direction);
+		} 
 		// else if(tl != -11) {
-		// 	// max number of bounces
-		// 	color = vec4(0.0, 0.0, 0.0, 1.0);
+		// // 	// max number of bounces
+		// color = vec4(0.0, 0.0, 0.0, 1.0);
 		// }
-		color = vec4(1., 1., 1., 1.);
+		// color = vec4(1., 1., 1., 1.);
 
 		// finally, multiply by the brightness factor and add to gl_FragColor
 		gl_FragColor += b*color;

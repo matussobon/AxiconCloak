@@ -56,15 +56,16 @@ import {
 // this works fine when running the app locally
 // import vertexShaderCode from "./vertex_shader_test.glsl";
 // import fragmentShaderCode from "./fragment_shader_test3.glsl";
+// a vite.config.mjs has to be included
 //https://www.youtube.com/watch?v=RDughHM9qoE
 //https://www.npmjs.com/package/vite-plugin-glsl
 
 // random reddit comment came in clutch
 // this works fine both locally and when deployed on github
-const responseFragment = await fetch("./fragment_shader_test3.glsl");
+const responseFragment = await fetch("./fragment_shader.glsl");
 const fragmentShaderCode = await responseFragment.text();
 
-const responseVertex = await fetch("./vertex_shader_test.glsl");
+const responseVertex = await fetch("./vertex_shader.glsl");
 const vertexShaderCode = await responseVertex.text();
 
 let scene;
