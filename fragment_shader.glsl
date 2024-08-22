@@ -266,6 +266,10 @@ bool findNearestIntersectionWithCylinder(
 	return true;
  }
 
+
+bool findNearestIntersectionWithObjectsNew(){
+	return true;
+}
 // find the closest intersection in the ray's forward direction with either the x, y or z planes
 // or any other objects (such as a red sphere)
 // s: ray start point (will not be altered)
