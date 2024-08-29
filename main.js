@@ -53,6 +53,17 @@ import {
   deleteStoredPhoto,
 } from "./photofunctions.js";
 
+
+const NONE = -1;
+
+// surface types
+const SURFACE_TYPE_LENS = 0;
+const SURFACE_TYPE_COLOR = 1;
+
+// lens types
+const LENS_TYPE_IDEAL = 0;
+const LENS_TYPE_HOLOGRAM = 1;
+
 // this works fine when running the app locally
 // import vertexShaderCode from "./vertex_shader_test.glsl";
 // import fragmentShaderCode from "./fragment_shader_test3.glsl";
@@ -325,6 +336,50 @@ function addRaytracingSphere() {
     }
   } while (i < 100);
 
+  let rectangle0 = {
+    corner: new THREE.Vector3(-0.5, 0, 0),
+    uSpanVector: new THREE.Vector3(1, 0, 0),
+    vSpanVector: new THREE.Vector3(0, 1, 0),
+    uSize: 1.0,
+    vSize: 1.0,
+    surfaceType: SURFACE_TYPE_LENS,
+    surfaceIndex: 0,
+  };
+
+  let rectangle1 = {
+    corner: new THREE.Vector3(-0.5, 0, 0),
+    uSpanVector: new THREE.Vector3(1, 0, 0),
+    vSpanVector: new THREE.Vector3(0, -1, 0),
+    uSize: 1,
+    vSize: 1,
+    surfaceType: SURFACE_TYPE_LENS,
+    surfaceIndex: 1,
+  };
+
+  let lensSurface0 = {
+    principalPoint: new THREE.Vector3(0, 0.5, 0),
+    opticalAxisDirection: new THREE.Vector3(0, 0, 1),
+    focalLength: 10,
+    transmissionCoefficient: 0.95,
+    lensType: LENS_TYPE_IDEAL
+  };
+
+  let lensSurface1 = {
+    principalPoint: new THREE.Vector3(0, -0.5, 0),
+    opticalAxisDirection: new THREE.Vector3(0, 0, 1),
+    focalLength: 1,
+    transmissionCoefficient: 0.95,
+    lensType: LENS_TYPE_IDEAL
+  };
+
+  let colorRed = {
+    color: new THREE.Vector4(1, 0, 0, 1),
+  };
+
+  let colorGreen = {
+    color: new THREE.Vector4(0, 1, 0, 1),
+  };
+
   // the sphere surrounding the camera in all directions
   const geometry = new THREE.SphereGeometry(raytracingSphereRadius);
   infoObject.raytracingSphereShaderMaterial = new THREE.ShaderMaterial({
@@ -365,6 +420,18 @@ function addRaytracingSphere() {
       noOfRays: { value: 1 },
       viewDirection: { value: new THREE.Vector3(0, 0, -1) },
       keepVideoFeedForward: { value: true },
+      rectangles: {
+        value: [rectangle0, rectangle1],
+      },
+
+      lensSurfaces: {
+        value: [lensSurface0, lensSurface1],
+      },
+
+      colors: {
+        value: [colorRed, colorGreen],
+      },
+
       Camera: {
         value: {
           viewDirection: new THREE.Vector3(0, 0, -1),

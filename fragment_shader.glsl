@@ -2,6 +2,20 @@ precision highp float;
 
 #define PI 3.1415926538
 
+#define NONE -1
+
+// object types
+#define OBJECT_TYPE_RECTANGLE 0
+
+// surface types
+#define SURFACE_TYPE_LENS 0
+#define SURFACE_TYPE_COLOR 1
+
+// lens types
+#define LENS_TYPE_IDEAL 0
+#define LENS_TYPE_HOLOGRAM 1
+
+
 varying vec3 intersectionPoint;
 
 uniform int maxTraceLevel;
@@ -86,6 +100,36 @@ struct addObject {
 uniform addObject Sphere;
 uniform addObject Rectangle;
 uniform addObject Cylinder;
+
+vec3 uSpan = vec3(1,0,0);
+vec3 vSpan = vec3(0,1,0);
+
+struct Rectangles { 
+	vec3 corner;
+    vec3 uSpanVector;
+    vec3 vSpanVector;
+	float uSize;
+	float vSize;
+    int surfaceType;
+    int surfaceIndex; 
+};
+uniform Rectangles rectangles[ 2 ];
+
+
+struct LensSurface {
+	vec3 principalPoint;
+    vec3 opticalAxisDirection;
+    float focalLength;
+    float transmissionCoefficient;
+	int lensType;
+};
+uniform LensSurface lensSurfaces[ 2 ];
+
+
+struct Colour {
+	vec4 color;
+};
+uniform Colour colors[ 2 ];
 
 vec3 zHat = vec3(0., 0., 1.);
 
@@ -192,6 +236,46 @@ bool findNearestIntersectionWithLens(
 	return true;
 }
 
+bool findNearestIntersectionWithRectangle(
+	vec3 s, // ray start point, origin 
+	vec3 d, // ray direction 
+	vec3 corner,
+	vec3 uSpanVector,	// normalised!
+	vec3 vSpanVector,	// normalised!
+	float uSize,
+	float vSize,
+	out vec3 intersectionPosition,
+	out float intersectionDistance,
+	out vec3 intersectionNormal
+) {
+	vec3 normal = normalize(cross(uSpanVector, vSpanVector));
+
+	// if the ray is parallel to the lens surface there is no intersection 
+	if (dot(d, normal)==0.) {
+		return false;
+	}
+
+	// calculate delta to check for intersections 
+	float delta = dot(corner - s, normal)/(dot(d, normal));
+	intersectionPosition = s + delta*d;
+
+	if (delta<0.) {
+		return false;
+	} 
+
+	vec3 ci = intersectionPosition - corner;
+	float uProj = dot(ci, uSpanVector);
+	float vProj = dot(ci, vSpanVector);
+
+	if (uProj<0. || uProj>uSize || vProj<0. || vProj>vSize){
+		return false;
+	}
+
+	intersectionDistance = delta*length(d);
+	intersectionNormal = normal;
+	return true;
+}
+
 bool findNearestIntersectionWithCylinder(	
 	vec3 s, 	// ray start point
 	vec3 d, 	// ray direction
@@ -266,10 +350,6 @@ bool findNearestIntersectionWithCylinder(
 	return true;
  }
 
-
-bool findNearestIntersectionWithObjectsNew(){
-	return true;
-}
 // find the closest intersection in the ray's forward direction with either the x, y or z planes
 // or any other objects (such as a red sphere)
 // s: ray start point (will not be altered)
@@ -282,11 +362,15 @@ bool findNearestIntersectionWithObjectsNew(){
 bool findNearestIntersectionWithObjects(
 	vec3 s, 
 	vec3 d,
-	in int startIntersectionObjectIndex,
+	in int startObjectType,	// rectangle = 0
+	in int startObjectIndex,
 	out vec3 closestIntersectionPosition,
 	out float closestIntersectionDistance,
 	out vec3 closestIntersectionNormal,
-	out int intersectingObjectIndex
+	out int closestIntersectionObjectType,
+	out int closestIntersectionObjectIndex,
+	out int closestIntersectionSurfaceType,
+	out int closestIntersectionSurfaceIndex
 ) {
 	closestIntersectionDistance = 1e20;	// this means there is no intersection, so far
 
@@ -295,69 +379,36 @@ bool findNearestIntersectionWithObjects(
 	float intersectionDistance;	// ... intersection distance, ...
 	vec3 intersectionNormal; //... intersection normal...
 
-	// is there an intersection with the cylinder1
-	if( showCloak && showInnerCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, innerRadius, yShift,innerYcoord, innerHeightNegative, innerHeightPositive, startIntersectionObjectIndex == 0, intersectionPosition, intersectionDistance, intersectionNormal) ) {
-		// yes, there is an intersection with the cylinder
-		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
-		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 0)) {
-			// the intersection with the z mirrors is the closest one so far
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			closestIntersectionNormal = intersectionNormal;
-			intersectingObjectIndex = 0;	// sphere
+	// is there an intersection with the array of rectangles?
+	int i = 0;
+	// go through all the rectangles
+	while( i < rectangles.length() ) {
+		// check if the ray started on this rectangle
+		if((startObjectType != OBJECT_TYPE_RECTANGLE) || (startObjectIndex != i)) {
+			// check if the intersection with it is closer than the closest one so far
+			if (findNearestIntersectionWithRectangle(
+				s, d, rectangles[i].corner, rectangles[i].uSpanVector, rectangles[i].vSpanVector, 
+				rectangles[i].uSize, rectangles[i].vSize, intersectionPosition, intersectionDistance, intersectionNormal)
+			) {
+				if(intersectionDistance < closestIntersectionDistance) {
+					closestIntersectionPosition = intersectionPosition;
+					closestIntersectionDistance = intersectionDistance;
+					closestIntersectionNormal = intersectionNormal;
+					closestIntersectionObjectType = OBJECT_TYPE_RECTANGLE;	// rectangle
+					closestIntersectionObjectIndex = i;
+					closestIntersectionSurfaceType = rectangles[i].surfaceType;
+					closestIntersectionSurfaceIndex = rectangles[i].surfaceIndex;
+				}
+			}
 		}
-	}
-	// is there an intersection with the cylinder2
-	if( showCloak && showOuterCylinder && findNearestIntersectionWithCylinder(s, d, sphereCentre, outerRadius,yShift, outerYcoord, outerHeightNegative, outerHeightPositive + yShift, startIntersectionObjectIndex == 1, intersectionPosition, intersectionDistance, intersectionNormal) ) {
-		// yes, there is an intersection with the cylinder
-		// if there either no intersection already, or, if there is one, is it closer than the closest intersection so far?
-		if(intersectionDistance < closestIntersectionDistance && (intersectionDistance > 1e-5 || startIntersectionObjectIndex != 1)) {
-			// the intersection with the z mirrors is the closest one so far
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			closestIntersectionNormal = intersectionNormal;
-			intersectingObjectIndex = 1;	// sphere
-		}
-	}
-
-	// if (showSphere && findNearestIntersectionWithSphere(s, d, sphereCentre, sphereRadius, intersectionPosition, intersectionDistance))
-	if( showSphere && findNearestIntersectionWithSphere(s, d, sphereCentre, sphereHeight, yShift, sphereRadius, intersectionPosition, intersectionDistance) ) {
-		if (intersectionDistance < closestIntersectionDistance)  {
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			intersectingObjectIndex = 2;
-		}
+		i++;
 	}
 
-	if ( showLens && findNearestIntersectionWithLens(s, d, sphereCentre, sphereRadius, 0., intersectionPosition, intersectionDistance)) {
-		if (intersectionDistance < closestIntersectionDistance)  {
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			intersectingObjectIndex = 3;
-		}
+	// now do the same for all other object types
 
-	}
-
-
-	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*1.5, rotAngle, intersectionPosition, intersectionDistance )) {
-		if (intersectionDistance < closestIntersectionDistance)  {
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			intersectingObjectIndex = 4;
-		}
-
-	}
-
-	if ( showLens && findNearestIntersectionWithLens(s, d, vec3(0,0,0), sphereRadius*2., rotAngle+20., intersectionPosition, intersectionDistance )) {
-		if (intersectionDistance < closestIntersectionDistance)  {
-			closestIntersectionPosition = intersectionPosition;
-			closestIntersectionDistance = intersectionDistance;
-			intersectingObjectIndex = 4;
-		}
-
-	}
 	return (closestIntersectionDistance < 1e20);
 }
+
 
 // d - incident ray direction 
 // closestIntersectionNormal - normal to the surface with of norm = 1
@@ -390,6 +441,18 @@ vec3 phaseHologram(vec3 d, vec3 closestIntersectionNormal, float deltaKy) {
 	return dPrime;
 }
 
+// return the light-ray direction after transmission through a lens of focal length f with 
+// (normalised) optical-axis direction axisHat;
+// d is the initial light-ray direction;
+// p2i is a vector from the lens's principal point to the intersection point (and this should be perpendicular to axisHat)
+vec3 lensDeflect(vec3 d, vec3 p2i, vec3 axisHat, float f, bool idealLens) {
+
+    if(idealLens) {
+        // ideal thin lens
+		// d' \propto d - d_axial / f (I - P) -- see geometry.pdf
+		return d - (dot(d, axisHat)/f)*p2i;
+	}
+}
 
 void main() {
 	Ray LightRay;
@@ -397,8 +460,6 @@ void main() {
 	vec3 pv = intersectionPoint - cameraPosition;	// the "pixel view direction", i.e. a vector from the centre of the camera aperture to the point on the object the shader is currently "shading"
 	vec3 focusPosition = cameraPosition + focusDistance/abs(dot(pv, viewDirection))*pv;	// see Johannes's lab book 30/4/24 p.174
 	
-
-
 	// trace <noOfRays> rays
 	gl_FragColor = vec4(0, 0, 0, 0);
 	vec4 color;
@@ -419,57 +480,58 @@ void main() {
 		// current brightness factor; this will multiply the colour at the end
 		vec4 b = vec4(1.0, 1.0, 1.0, 1.0);
 
-		vec3 ip;
-		float id;
-		vec3 iN;
-		int oi = -1;
 		// int si = -1;
-		int tl = maxTraceLevel;	// max trace level
+		int traceLevel = maxTraceLevel;	// max trace level
+
+		vec3 intersectionPosition;
+		float intersectionDistance;
+		vec3 intersectionNormal;
+		int intersectionObjectType = NONE;
+		int intersectionObjectIndex = NONE;
+		int intersectionSurfaceType;
+		int intersectionSurfaceIndex;
+
 		while(
-			(tl-- > 0) &&
+			(traceLevel-- > 0) &&
 			findNearestIntersectionWithObjects(LightRay.origin, LightRay.direction, 
-				oi,
-				ip,	// out vec3 intersectionPosition
-				id,	// out float intersectionDistance
-				iN,
-				oi	// out int objectIndex
+				 intersectionObjectType,
+				 intersectionObjectIndex,
+				 intersectionPosition,
+				 intersectionDistance,
+				 intersectionNormal,
+				 intersectionObjectType,
+				 intersectionObjectIndex,
+				 intersectionSurfaceType,
+				 intersectionSurfaceIndex
 			)
 		) {
-			if(oi == 0) { 
-				// the first cylinder
-				// b *= vec4(1., .5, .5, 1.);
-				LightRay.direction = phaseHologram(LightRay.direction, iN, phaseShift );
+			// there is an intersection; what type of surface is it?
+			if(intersectionSurfaceType == SURFACE_TYPE_LENS) {
+				// if(lensSurfaces[intersectionSurfaceIndex].lensType == LENS_TYPE_IDEAL) {
+					LightRay.direction = lensDeflect(
+						LightRay.direction, 
+						intersectionPosition-lensSurfaces[intersectionSurfaceIndex].principalPoint, 
+						lensSurfaces[intersectionSurfaceIndex].opticalAxisDirection, 
+						lensSurfaces[intersectionSurfaceIndex].focalLength, 
+						true // lensSurfaces[intersectionSurfaceIndex].lensType == LENS_TYPE_IDEAL
+					);
+					b.rgb *= lensSurfaces[intersectionSurfaceIndex].transmissionCoefficient;
+				// } else {
+				// 	LightRay.direction = phaseHologram(
+				// 		LightRay.direction, 
+				// 		lensSurfaces[intersectionSurfaceIndex].opticalAxisDirection,
+				// 		0.5
+				// 	);
+				// }
+				LightRay.origin=intersectionPosition;
+			} 
+			else if(intersectionSurfaceType == SURFACE_TYPE_COLOR) {
+				color = colors[intersectionSurfaceIndex].color;
+				traceLevel = -10;
 			}
-			else if(oi == 1) { 
-				// the second cylinder
-				// b *= vec4(.5, 0.5, 1., 1.0);
-				LightRay.direction = phaseHologram(LightRay.direction, iN, -phaseShift);
-			}
-
-			else if (oi == 2) 
-			{
-				// the sphere 
-				color = vec4(1., 0., 0., 1.);
-				//b *= vec4(.5, 0.5, 1., 1.0);
-				tl = -10;
-			}
-
-			else if (oi == 3)
-			{
-				color = vec4(0.1255, 0.749, 0.3333, 1.0);
-				tl = -10;
-			}
-
-			else if (oi == 4)
-			{
-				color = vec4(0.35, 0.13, 0.75, 1.0);
-				tl = -10;
-			}
-				
-			LightRay.origin=ip;
 		}
 		
-		if(tl > 0) {
+		if(traceLevel > 0) {
 			color = getColorOfBackground(LightRay.direction);
 		} 
 		// else if(tl != -11) {
