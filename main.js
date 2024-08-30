@@ -132,6 +132,12 @@ let GUIMesh;
 let showGUIMesh;
 // let meshRotationX = -Math.PI/4, meshRotationY = 0, meshRotationZ = 0;
 
+let lensSurface0, lensSurface1;
+let lensSurfaces = [];
+
+let rectangle0, rectangle1;
+let rectangles = [];
+
 // true if stored photo is showing
 let storedPhoto;
 
@@ -165,6 +171,48 @@ animate();
 function init() {
   // create the info element first so that any problems can be communicated
   createStatus();
+
+  // rectangle0 = {
+  //   corner: new THREE.Vector3(-0.5, 0, 0),
+  //   uSpanVector: new THREE.Vector3(1, 0, 0),
+  //   vSpanVector: new THREE.Vector3(0, 1, 0),
+  //   uSize: 1.0,
+  //   vSize: 1.0,
+  //   surfaceType: SURFACE_TYPE_LENS,
+  //   surfaceIndex: 0,
+  // };
+
+  // rectangle1 = {
+  //   corner: new THREE.Vector3(-0.5, 0, 0),
+  //   uSpanVector: new THREE.Vector3(1, 0, 0),
+  //   vSpanVector: new THREE.Vector3(0, -1, 0),
+  //   uSize: 1,
+  //   vSize: 1,
+  //   surfaceType: SURFACE_TYPE_LENS,
+  //   surfaceIndex: 1,
+  // };
+
+  // rectangles.push(rectangle0, rectangle1);
+
+  // lensSurface0 = {
+  //   principalPoint: new THREE.Vector3(0, 0.5, 0),
+  //   opticalAxisDirection: new THREE.Vector3(0, 0, 1),
+  //   focalLength: 10,
+  //   transmissionCoefficient: 0.95,
+  //   lensType: LENS_TYPE_IDEAL
+  // };
+
+  // lensSurface1 = {
+  //   principalPoint: new THREE.Vector3(0, -0.5, 0),
+  //   opticalAxisDirection: new THREE.Vector3(0, 0, 1),
+  //   focalLength: 1,
+  //   transmissionCoefficient: 0.95,
+  //   lensType: LENS_TYPE_IDEAL
+  // };
+
+  // lensSurfaces.push(lensSurface0, lensSurface1);
+
+  // addLensFan();
 
   scene = new THREE.Scene();
   // scene.background = new THREE.Color( 'skyblue' );
@@ -227,6 +275,38 @@ function init() {
   createInfo();
 
   refreshInfo(infoObject);
+}
+
+function addLensFan() {
+  let i;
+  let vis = [true, true, true];
+  for(i=0; i<3; i++) {
+    let corner = new THREE.Vector3(0, 0, 0);
+    let u = new THREE.Vector3(0, 1, 0);
+    let v = new THREE.Vector3(Math.sin(1*i), 0, Math.cos(1*i));
+    let p = (new THREE.Vector3(0, 0, 0)).copy(corner).addScaledVector(u, 0.5).addScaledVector(v, 0.5);
+    let a = (new THREE.Vector3(0, 0, 0)).crossVectors(u, v);
+    let rectangleTemp = {
+      visible: vis[i],
+      corner: corner,
+      uSpanVector: u,
+      vSpanVector: v,
+      uSize: 1,
+      vSize: 1,
+      surfaceType: SURFACE_TYPE_LENS,
+      surfaceIndex: lensSurfaces.length,
+    };
+    rectangles.push(rectangleTemp);
+
+    let lensSurfaceTemp = {
+      principalPoint: p,
+      opticalAxisDirection: a,
+      focalLength: i+1,
+      transmissionCoefficient: 0.95,
+      lensType: LENS_TYPE_IDEAL
+    };
+    lensSurfaces.push(lensSurfaceTemp);
+  }
 }
 
 function animate() {
@@ -311,6 +391,10 @@ function updateUniforms() {
       focusDistance;
     // GUIParams.'tan<sup>-1</sup>(focus. dist.)'.value = atanFocusDistance;
   }
+
+  rectangles = [];
+  lensSurfaces = [];
+  addLensFan();
 }
 
 /** create raytracing phere */
@@ -336,42 +420,6 @@ function addRaytracingSphere() {
     }
   } while (i < 100);
 
-  let rectangle0 = {
-    corner: new THREE.Vector3(-0.5, 0, 0),
-    uSpanVector: new THREE.Vector3(1, 0, 0),
-    vSpanVector: new THREE.Vector3(0, 1, 0),
-    uSize: 1.0,
-    vSize: 1.0,
-    surfaceType: SURFACE_TYPE_LENS,
-    surfaceIndex: 0,
-  };
-
-  let rectangle1 = {
-    corner: new THREE.Vector3(-0.5, 0, 0),
-    uSpanVector: new THREE.Vector3(1, 0, 0),
-    vSpanVector: new THREE.Vector3(0, -1, 0),
-    uSize: 1,
-    vSize: 1,
-    surfaceType: SURFACE_TYPE_LENS,
-    surfaceIndex: 1,
-  };
-
-  let lensSurface0 = {
-    principalPoint: new THREE.Vector3(0, 0.5, 0),
-    opticalAxisDirection: new THREE.Vector3(0, 0, 1),
-    focalLength: 10,
-    transmissionCoefficient: 0.95,
-    lensType: LENS_TYPE_IDEAL
-  };
-
-  let lensSurface1 = {
-    principalPoint: new THREE.Vector3(0, -0.5, 0),
-    opticalAxisDirection: new THREE.Vector3(0, 0, 1),
-    focalLength: 1,
-    transmissionCoefficient: 0.95,
-    lensType: LENS_TYPE_IDEAL
-  };
-
   let colorRed = {
     color: new THREE.Vector4(1, 0, 0, 1),
   };
@@ -379,6 +427,10 @@ function addRaytracingSphere() {
   let colorGreen = {
     color: new THREE.Vector4(0, 1, 0, 1),
   };
+
+  rectangles = [];
+  lensSurfaces = [];
+  addLensFan();
 
   // the sphere surrounding the camera in all directions
   const geometry = new THREE.SphereGeometry(raytracingSphereRadius);
@@ -421,12 +473,9 @@ function addRaytracingSphere() {
       viewDirection: { value: new THREE.Vector3(0, 0, -1) },
       keepVideoFeedForward: { value: true },
       rectangles: {
-        value: [rectangle0, rectangle1],
+        value: rectangles,
       },
-
-      lensSurfaces: {
-        value: [lensSurface0, lensSurface1],
-      },
+      lensSurfaces: { value: lensSurfaces },
 
       colors: {
         value: [colorRed, colorGreen],
@@ -635,6 +684,7 @@ function createGUI() {
     .name("<i>r</i><sub>sphere</sub>")
     .onChange((r) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.sphereRadius.value = r;
+      lensSurface0.focalLength = r;
     });
   sphereFolder
     .add(GUIParams, "sphereHeight", -1, 1, 0.05)

@@ -74,7 +74,7 @@ struct CameraAperture {
 	vec3 viewDirection;
 	vec3 apertureXHat;
 	vec3 apertureYHat;
-	float focustDistance;
+	float focusDistance;
 	float apertureRadius;
 	float randomNumbersX[100];
 	float randomNumbersY[100];
@@ -105,6 +105,7 @@ vec3 uSpan = vec3(1,0,0);
 vec3 vSpan = vec3(0,1,0);
 
 struct Rectangles { 
+	bool visible;
 	vec3 corner;
     vec3 uSpanVector;
     vec3 vSpanVector;
@@ -113,7 +114,7 @@ struct Rectangles {
     int surfaceType;
     int surfaceIndex; 
 };
-uniform Rectangles rectangles[ 2 ];
+uniform Rectangles rectangles[ 3 ];
 
 
 struct LensSurface {
@@ -123,7 +124,7 @@ struct LensSurface {
     float transmissionCoefficient;
 	int lensType;
 };
-uniform LensSurface lensSurfaces[ 2 ];
+uniform LensSurface lensSurfaces[ 3 ];
 
 
 struct Colour {
@@ -384,7 +385,7 @@ bool findNearestIntersectionWithObjects(
 	// go through all the rectangles
 	while( i < rectangles.length() ) {
 		// check if the ray started on this rectangle
-		if((startObjectType != OBJECT_TYPE_RECTANGLE) || (startObjectIndex != i)) {
+		if( ((startObjectType != OBJECT_TYPE_RECTANGLE) || (startObjectIndex != i)) && rectangles[i].visible ) {
 			// check if the intersection with it is closer than the closest one so far
 			if (findNearestIntersectionWithRectangle(
 				s, d, rectangles[i].corner, rectangles[i].uSpanVector, rectangles[i].vSpanVector, 
@@ -513,7 +514,7 @@ void main() {
 						intersectionPosition-lensSurfaces[intersectionSurfaceIndex].principalPoint, 
 						lensSurfaces[intersectionSurfaceIndex].opticalAxisDirection, 
 						lensSurfaces[intersectionSurfaceIndex].focalLength, 
-						true // lensSurfaces[intersectionSurfaceIndex].lensType == LENS_TYPE_IDEAL
+						lensSurfaces[intersectionSurfaceIndex].lensType == LENS_TYPE_IDEAL
 					);
 					b.rgb *= lensSurfaces[intersectionSurfaceIndex].transmissionCoefficient;
 				// } else {
