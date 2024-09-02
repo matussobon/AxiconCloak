@@ -276,8 +276,6 @@ function updateUniforms() {
     .crossVectors(viewDirection, apertureBasisVector1)
     .normalize();
 
-  infoObject.raytracingSphereShaderMaterial.uniforms.noOfRays.value =
-    infoObject.noOfRays;
   infoObject.raytracingSphereShaderMaterial.uniforms.apertureXHat.value.copy(
     apertureBasisVector1
   );
@@ -412,7 +410,6 @@ function createGUI() {
     "Horiz. FOV (&deg;)": infoObject.fovScreen,
     "Aperture radius": infoObject.apertureRadius,
     "tan<sup>-1</sup>(focus. dist.)": infoObject.atanFocusDistance,
-    "No of rays": infoObject.noOfRays,
     autofocus: function () {
       autofocus = !autofocus;
       autofocusControl.name("Autofocus: " + (autofocus ? "On" : "Off"));
@@ -518,14 +515,7 @@ function createGUI() {
   };
 
   gui
-    .add(GUIParams, "noOfReflections", 0, 200, 1)
-    .name("Max. reflections")
-    .onChange((r) => {
-      infoObject.raytracingSphereShaderMaterial.uniforms.maxTraceLevel.value =
-        r + 2;
-    });
-  gui
-    .add(GUIParams, "phaseShift", 0, 1, 0.05)
+    .add(GUIParams, "phaseShift", 0, 1, 0.02)
     .name("Hologram Phase shift")
     .onChange((pShift) => {
       infoObject.raytracingSphereShaderMaterial.uniforms.phaseShift.value =
@@ -679,9 +669,6 @@ function createGUI() {
   gui.add(GUIParams, "Horiz. FOV (&deg;)", 1, 170, 1).onChange((fov) => {
     screenChanged(renderer, infoObject.camera, fov);
     infoObject.fovScreen = fov;
-  });
-  gui.add(GUIParams, "No of rays", 1, 100, 1).onChange((n) => {
-    infoObject.noOfRays = n;
   });
 
   if (renderer.xr.enabled) {
